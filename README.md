@@ -36,6 +36,19 @@ PassForge prioritizes strong encryption and user control over security settings.
 - Argon2 & PBKDF2 Key Derivation – Protects against brute-force attacks.
 - Your master password is never stored, and all data is encrypted locally before being written to disk.
 
+*🛠 Installation*
+
+Build from Source on Linux (Qt & C++ Required)
+
+```
+git clone https://github.com/yourusername/PassForge.git
+cd PassForge
+mkdir build && cd build
+cmake ..
+make
+./PassForge
+```
+
 *📖 Contributing*
 
 We welcome contributions! If you’d like to contribute, feel free to fork the repo, create a branch, and submit a pull request.

@@ -3,6 +3,7 @@
 #include "../Configs/Constants.h"
 #include "../Crypto/Crypto.h"
 #include <QClipboard>
+#include <QString>
 #include <sstream>
 
 PasswordGenerator::PasswordGenerator(QWidget *parent) : QDialog(parent), ui(new Ui::PasswordGenerator)
@@ -19,15 +20,18 @@ void PasswordGenerator::generatePassword()
     std::string selectedChars = this->getSelectedCharaters();
     if (selectedChars.empty()) return;
 
-    uint32_t randomValues[ui->PasswdLengthSpinBox->value()];
-    Crypto::getRandomUnsignedIntegers(randomValues, ui->PasswdLengthSpinBox->value(), 0, (selectedChars.length() - 1));
+    size_t newPasswordLength = ui->PasswdLengthSpinBox->value();
+    uint32_t randomValues[newPasswordLength];
+    Crypto::getRandomUnsignedIntegers(randomValues, newPasswordLength, 0, (selectedChars.length() - 1));
 
-    std::stringstream stream;
-    for (uint32_t i = 0; i < ui->PasswdLengthSpinBox->value(); i++)
-        stream << selectedChars.at(randomValues[i]);
-    std::memset(stream.str().data(), 0, (sizeof(char) * stream.str().size()));
-    std::memset(randomValues, 0, (sizeof(uint32_t) * ui->PasswdLengthSpinBox->value()));
-    ui->PasswordLineEdit->setText(stream.str().c_str());
+    char newPassword[newPasswordLength + 1];
+    for (uint32_t i = 0; i < newPasswordLength; i++)
+        newPassword[i] = (selectedChars.at(randomValues[i]));
+    newPassword[newPasswordLength] = '\0';
+    ui->PasswordLineEdit->setText(newPassword);
+
+    std::memset(newPassword, 0, (sizeof(char) * newPasswordLength));
+    std::memset(randomValues, 0, (sizeof(uint32_t) * newPasswordLength));
 }
 
 void PasswordGenerator::copyPasswordToClipboard()

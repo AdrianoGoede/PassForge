@@ -2,6 +2,7 @@
 #define PASSWORDGENERATOR_H
 
 #include <QDialog>
+#include <QString>
 
 namespace Ui {
 class PasswordGenerator;
@@ -22,6 +23,9 @@ private slots:
 private:
     Ui::PasswordGenerator *ui;
     std::string getSelectedCharaters() const;
+    QString generateRandomPassword() const;
+    QString generatePassphrase() const;
+    QString generateHash() const;
 };
 
 #endif // PASSWORDGENERATOR_H

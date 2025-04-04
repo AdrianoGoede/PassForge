@@ -17,8 +17,17 @@ PasswordGenerator::~PasswordGenerator() { delete ui; }
 
 void PasswordGenerator::generatePassword()
 {
+    switch (ui->OptionsTabWidget->currentIndex()) {
+        case 0: ui->PasswordLineEdit->setText(this->generateRandomPassword()); break;
+        case 1: ui->PasswordLineEdit->setText(this->generatePassphrase()); break;
+        case 2: ui->PasswordLineEdit->setText(this->generateHash()); break;
+    }
+}
+
+QString PasswordGenerator::generateRandomPassword() const
+{
     std::string selectedChars = this->getSelectedCharaters();
-    if (selectedChars.empty()) return;
+    if (selectedChars.empty()) return QString();
 
     size_t newPasswordLength = ui->PasswdLengthSpinBox->value();
     uint32_t randomValues[newPasswordLength];
@@ -28,10 +37,22 @@ void PasswordGenerator::generatePassword()
     for (uint32_t i = 0; i < newPasswordLength; i++)
         newPassword[i] = (selectedChars.at(randomValues[i]));
     newPassword[newPasswordLength] = '\0';
-    ui->PasswordLineEdit->setText(newPassword);
+    QString result(newPassword);
 
-    std::memset(newPassword, 0, (sizeof(char) * newPasswordLength));
-    std::memset(randomValues, 0, (sizeof(uint32_t) * newPasswordLength));
+    Crypto::wipeMemory(newPassword, sizeof(newPassword));
+    Crypto::wipeMemory(randomValues, sizeof(randomValues));
+
+    return result;
+}
+
+QString PasswordGenerator::generatePassphrase() const
+{
+    return QString(); // TO DO!
+}
+
+QString PasswordGenerator::generateHash() const
+{
+    return QString(); // TO DO!
 }
 
 void PasswordGenerator::copyPasswordToClipboard()

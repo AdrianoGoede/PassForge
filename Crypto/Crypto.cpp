@@ -3,8 +3,6 @@
 #include <botan-2/botan/numthry.h>
 #include <botan-2/botan/hex.h>
 
-#include <QDebug>
-
 Crypto::Crypto() {}
 
 void Crypto::wipeMemory(void *address, size_t bytes) { Botan::secure_scrub_memory(address, bytes); }
@@ -19,10 +17,12 @@ void Crypto::getRandomUnsignedIntegers(uint32_t *buffer, size_t count, uint32_t 
     }
 }
 
-std::string Crypto::getHash(const uint8_t* bytes, size_t length)
+std::string Crypto::getHash(const std::string& plainText, const char* algorithm)
 {
-    std::unique_ptr<Botan::HashFunction> hash = Botan::HashFunction::create("SHA-256");
-    hash->update(bytes, length);
-    Botan::secure_vector<uint8_t> final = hash->final();
-    return Botan::hex_encode(final);
+    Botan::secure_vector<uint8_t> bytes(plainText.cbegin(), plainText.cend());
+    std::unique_ptr<Botan::HashFunction> hash = Botan::HashFunction::create(algorithm);
+    if (!hash) return std::string(); // TO DO!
+    hash->update(bytes);
+    bytes = hash->final();
+    return Botan::hex_encode(bytes);
 }

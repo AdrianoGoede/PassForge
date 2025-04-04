@@ -22,6 +22,7 @@ private slots:
 
 private:
     Ui::PasswordGenerator *ui;
+    void setHashingAlgorithms();
     std::string getSelectedCharaters() const;
     QString generateRandomPassword() const;
     QString generatePassphrase() const;

@@ -1,6 +1,6 @@
 #ifndef CONFIGS_H
 #define CONFIGS_H
 
-
+#define SUPPORTED_HASHING_ALGORITHMS "SHA-224","SHA-256","SHA-384","SHA-512","MD4","MD5"
 
 #endif // CONFIGS_H

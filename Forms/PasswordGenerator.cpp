@@ -1,6 +1,7 @@
 #include "PasswordGenerator.h"
 #include "Forms/ui_PasswordGenerator.h"
 #include "../Configs/Constants.h"
+#include "../Configs/Configs.h"
 #include "../Crypto/Crypto.h"
 #include <QClipboard>
 #include <QString>
@@ -9,6 +10,7 @@
 PasswordGenerator::PasswordGenerator(QWidget *parent) : QDialog(parent), ui(new Ui::PasswordGenerator)
 {
     ui->setupUi(this);
+    this->setHashingAlgorithms();
     connect(ui->PasswdGenPushButton, &QPushButton::clicked, this, &PasswordGenerator::generatePassword);
     connect(ui->PasswdCopyPushButton, &QPushButton::clicked, this, &PasswordGenerator::copyPasswordToClipboard);
 }
@@ -52,7 +54,9 @@ QString PasswordGenerator::generatePassphrase() const
 
 QString PasswordGenerator::generateHash() const
 {
-    return QString(); // TO DO!
+    QString plainText = ui->HashPlainTextEdit->toPlainText();
+    std::string hash = Crypto::getHash(plainText.toStdString(), ui->HashAlgorithmComboBox->currentText().toStdString().c_str());
+    return QString(hash.c_str());
 }
 
 void PasswordGenerator::copyPasswordToClipboard()
@@ -60,6 +64,13 @@ void PasswordGenerator::copyPasswordToClipboard()
     QClipboard* clipboard = QApplication::clipboard();
     if (clipboard)
         clipboard->setText(ui->PasswordLineEdit->text());
+}
+
+void PasswordGenerator::setHashingAlgorithms()
+{
+    std::vector<QString> algorithms({ SUPPORTED_HASHING_ALGORITHMS });
+    for (const QString& algorithm : algorithms)
+        ui->HashAlgorithmComboBox->addItem(algorithm);
 }
 
 std::string PasswordGenerator::getSelectedCharaters() const

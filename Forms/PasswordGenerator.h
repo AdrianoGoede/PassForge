@@ -24,12 +24,15 @@ private slots:
 
 private:
     Ui::PasswordGenerator *ui;
+    QVector<QString> wordlist;
+    bool reloadWordlists = true;
 
     void setHashingAlgorithms();
     void setDefaultWordlists();
-    std::string getSelectedCharaters() const;
+    void loadWordlist();
+    QString getSelectedCharaters() const;
     QString generateRandomPassword() const;
-    QString generatePassphrase() const;
+    QString generatePassphrase();
     QString generateHash() const;
 };
 

@@ -6,12 +6,13 @@
 #include <QFileDialog>
 #include <QStringList>
 #include <QMessageBox>
+#include <QTextStream>
 #include <QClipboard>
 #include <QString>
 #include <QFile>
 #include <QList>
 #include <QDir>
-#include <sstream>
+#include <QSet>
 
 PasswordGenerator::PasswordGenerator(QWidget *parent) : QDialog(parent), ui(new Ui::PasswordGenerator)
 {
@@ -37,8 +38,8 @@ void PasswordGenerator::generatePassword()
 
 QString PasswordGenerator::generateRandomPassword() const
 {
-    std::string selectedChars = this->getSelectedCharaters();
-    if (selectedChars.empty()) return QString();
+    QString selectedChars = this->getSelectedCharaters();
+    if (selectedChars.isEmpty()) return QString();
 
     size_t newPasswordLength = ui->PasswdLengthSpinBox->value();
     uint32_t randomValues[newPasswordLength];
@@ -46,7 +47,7 @@ QString PasswordGenerator::generateRandomPassword() const
 
     char newPassword[newPasswordLength + 1];
     for (uint32_t i = 0; i < newPasswordLength; i++)
-        newPassword[i] = (selectedChars.at(randomValues[i]));
+        newPassword[i] = (selectedChars.at(randomValues[i]).toLatin1());
     newPassword[newPasswordLength] = '\0';
     QString result(newPassword);
 
@@ -56,9 +57,35 @@ QString PasswordGenerator::generateRandomPassword() const
     return result;
 }
 
-QString PasswordGenerator::generatePassphrase() const
+QString PasswordGenerator::generatePassphrase()
 {
-    return QString(); // TO DO!
+    this->loadWordlist();
+
+    size_t newPasswordLength = ui->PassphraseLengthSpinBox->value();
+    uint32_t randomValues[newPasswordLength];
+    Crypto::getRandomUnsignedIntegers(randomValues, newPasswordLength, 0, (this->wordlist.size() - 1));
+
+    QByteArray separator(!ui->PassphraseSeparatorLineEdit->text().isEmpty() ? ui->PassphraseSeparatorLineEdit->text().toUtf8() : " ");
+    QByteArray buffer;
+    for (uint32_t i = 0; i < newPasswordLength; i++) {
+        if (i > 0) buffer.append(separator);
+        QByteArray word = this->wordlist.at(randomValues[i]).toUtf8();
+        switch (ui->PassphraseWordCaseComboBox->currentIndex()) {
+            case 0: buffer.append(word.toLower()); break;
+            case 1: buffer.append(word.toUpper()); break;
+            case 2: {
+                buffer.append(word.left(1).toUpper());
+                buffer.append(word.mid(1).toLower());
+            }; break;
+        }
+        Crypto::wipeMemory(word.data(), word.length());
+    }
+    QString result = QString::fromUtf8(buffer);
+
+    Crypto::wipeMemory(buffer.data(), buffer.length());
+    Crypto::wipeMemory(randomValues, sizeof(randomValues));
+
+    return result;
 }
 
 QString PasswordGenerator::generateHash() const
@@ -79,8 +106,9 @@ void PasswordGenerator::addWordlist()
 {
     QFileDialog dialog(this, "Wordlist File");
     dialog.setFilter(QDir::Filter::NoDotAndDotDot | QDir::Filter::AllEntries);
-    if (dialog.exec() == QDialog::DialogCode::Accepted)
-        ui->PassphraseWordlistsListWidget->addItem(dialog.selectedFiles().at(0));
+    if (dialog.exec() != QDialog::DialogCode::Accepted) return;
+    ui->PassphraseWordlistsListWidget->addItem(dialog.selectedFiles().at(0));
+    this->reloadWordlists = true;
 }
 
 void PasswordGenerator::removeWordlist()
@@ -98,6 +126,7 @@ void PasswordGenerator::removeWordlist()
     if (userChoice != QMessageBox::Button::Yes) return;
     for (QListWidgetItem* item : selectedItems)
         if (item) delete item;
+    this->reloadWordlists = true;
 }
 
 void PasswordGenerator::setHashingAlgorithms()
@@ -112,21 +141,40 @@ void PasswordGenerator::setDefaultWordlists()
     QDir directory(WORDLISTS_RESOURCES_DIRECTORY);
     QStringList files = directory.entryList(QDir::Filter::Files);
     for (const QString& file : files)
-        ui->PassphraseWordlistsListWidget->addItem(file);
+        ui->PassphraseWordlistsListWidget->addItem(QString("%1/%2").arg(WORDLISTS_RESOURCES_DIRECTORY, file));
 }
 
-std::string PasswordGenerator::getSelectedCharaters() const
+void PasswordGenerator::loadWordlist()
 {
-    std::stringstream stream;
-    stream << (ui->PasswdUpperCaseCharsCheckBox->checkState() == Qt::CheckState::Checked ? UPPER_CASE_CHARACTERS : "");
-    stream << (ui->PasswdLowerCaseCharsCheckBox->checkState() == Qt::CheckState::Checked ? LOWER_CASE_CHARACTERS : "");
-    stream << (ui->PasswdNumbersCheckBox->checkState() == Qt::CheckState::Checked ? NUMBER_CHARACTERS : "");
-    stream << (ui->PasswdLogogramCharsCheckBox->checkState() == Qt::CheckState::Checked ? LOGOGRAM_CHARACTERS : "");
-    stream << (ui->PasswdPunctuationCharsCheckBox->checkState() == Qt::CheckState::Checked ? PUNCTUATION_CHARACTERS : "");
-    stream << (ui->PasswdDahesSlashesCheckBox->checkState() == Qt::CheckState::Checked ? DASH_SLASH_CHARACTERS : "");
-    stream << (ui->PasswdMathSymbolsCheckBox->checkState() == Qt::CheckState::Checked ? MATH_SYMBOL_CHARACTERS : "");
-    stream << (ui->PasswdBracesCheckBox->checkState() == Qt::CheckState::Checked ? BRACE_CHARACTERS : "");
-    stream << (ui->PasswdQuoteCharsCheckBox->checkState() == Qt::CheckState::Checked ? QUOTE_CHARACTERS : "");
-    stream << ui->PasswdCustomCharsLineEdit->text().toStdString();
-    return stream.str();
+    if (!this->reloadWordlists) return;
+
+    QSet<QString> words;
+    for (size_t i = 0; i < ui->PassphraseWordlistsListWidget->count(); i++) {
+        QFile file(ui->PassphraseWordlistsListWidget->item(i)->text());
+        if (!file.open(QFile::OpenModeFlag::ReadOnly | QFile::OpenModeFlag::Text)) continue;
+        QTextStream stream(&file);
+        while (!stream.atEnd()) {
+            QString line = stream.readLine();
+            words.insert((line.contains('\t') ? line.split('\t').last() : line).trimmed().toLower());
+        }
+    }
+
+    this->wordlist = QVector<QString>(words.cbegin(), words.cend());
+    this->reloadWordlists = false;
+}
+
+QString PasswordGenerator::getSelectedCharaters() const
+{
+    QByteArray buffer;
+    buffer.append(ui->PasswdUpperCaseCharsCheckBox->checkState() == Qt::CheckState::Checked ? UPPER_CASE_CHARACTERS : "");
+    buffer.append(ui->PasswdLowerCaseCharsCheckBox->checkState() == Qt::CheckState::Checked ? LOWER_CASE_CHARACTERS : "");
+    buffer.append(ui->PasswdNumbersCheckBox->checkState() == Qt::CheckState::Checked ? NUMBER_CHARACTERS : "");
+    buffer.append(ui->PasswdLogogramCharsCheckBox->checkState() == Qt::CheckState::Checked ? LOGOGRAM_CHARACTERS : "");
+    buffer.append(ui->PasswdPunctuationCharsCheckBox->checkState() == Qt::CheckState::Checked ? PUNCTUATION_CHARACTERS : "");
+    buffer.append(ui->PasswdDahesSlashesCheckBox->checkState() == Qt::CheckState::Checked ? DASH_SLASH_CHARACTERS : "");
+    buffer.append(ui->PasswdMathSymbolsCheckBox->checkState() == Qt::CheckState::Checked ? MATH_SYMBOL_CHARACTERS : "");
+    buffer.append(ui->PasswdBracesCheckBox->checkState() == Qt::CheckState::Checked ? BRACE_CHARACTERS : "");
+    buffer.append(ui->PasswdQuoteCharsCheckBox->checkState() == Qt::CheckState::Checked ? QUOTE_CHARACTERS : "");
+    buffer.append(ui->PasswdCustomCharsLineEdit->text().toUtf8());
+    return QString::fromUtf8(buffer);
 }

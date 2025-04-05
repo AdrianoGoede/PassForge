@@ -19,10 +19,14 @@ public:
 private slots:
     void generatePassword();
     void copyPasswordToClipboard();
+    void addWordlist();
+    void removeWordlist();
 
 private:
     Ui::PasswordGenerator *ui;
+
     void setHashingAlgorithms();
+    void setDefaultWordlists();
     std::string getSelectedCharaters() const;
     QString generateRandomPassword() const;
     QString generatePassphrase() const;

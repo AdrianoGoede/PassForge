@@ -3,16 +3,25 @@
 #include "../Configs/Constants.h"
 #include "../Configs/Configs.h"
 #include "../Crypto/Crypto.h"
+#include <QFileDialog>
+#include <QStringList>
+#include <QMessageBox>
 #include <QClipboard>
 #include <QString>
+#include <QFile>
+#include <QList>
+#include <QDir>
 #include <sstream>
 
 PasswordGenerator::PasswordGenerator(QWidget *parent) : QDialog(parent), ui(new Ui::PasswordGenerator)
 {
     ui->setupUi(this);
-    this->setHashingAlgorithms();
+    setHashingAlgorithms();
+    setDefaultWordlists();
     connect(ui->PasswdGenPushButton, &QPushButton::clicked, this, &PasswordGenerator::generatePassword);
     connect(ui->PasswdCopyPushButton, &QPushButton::clicked, this, &PasswordGenerator::copyPasswordToClipboard);
+    connect(ui->PassphraseWordlistsAddButton, &QPushButton::clicked, this, &PasswordGenerator::addWordlist);
+    connect(ui->PassphraseWordlistsRemoveButton, &QPushButton::clicked, this, &PasswordGenerator::removeWordlist);
 }
 
 PasswordGenerator::~PasswordGenerator() { delete ui; }
@@ -66,11 +75,44 @@ void PasswordGenerator::copyPasswordToClipboard()
         clipboard->setText(ui->PasswordLineEdit->text());
 }
 
+void PasswordGenerator::addWordlist()
+{
+    QFileDialog dialog(this, "Wordlist File");
+    dialog.setFilter(QDir::Filter::NoDotAndDotDot | QDir::Filter::AllEntries);
+    if (dialog.exec() == QDialog::DialogCode::Accepted)
+        ui->PassphraseWordlistsListWidget->addItem(dialog.selectedFiles().at(0));
+}
+
+void PasswordGenerator::removeWordlist()
+{
+    QList<QListWidgetItem*> selectedItems = ui->PassphraseWordlistsListWidget->selectedItems();
+    if (selectedItems.empty()) return;
+
+    QMessageBox::Button userChoice = QMessageBox::question(
+        this,
+        QString(),
+        "Are you sure you want to remove the selected wordlists",
+        (QMessageBox::Button::Yes | QMessageBox::Button::No)
+    );
+
+    if (userChoice != QMessageBox::Button::Yes) return;
+    for (QListWidgetItem* item : selectedItems)
+        if (item) delete item;
+}
+
 void PasswordGenerator::setHashingAlgorithms()
 {
     std::vector<QString> algorithms({ SUPPORTED_HASHING_ALGORITHMS });
     for (const QString& algorithm : algorithms)
         ui->HashAlgorithmComboBox->addItem(algorithm);
+}
+
+void PasswordGenerator::setDefaultWordlists()
+{
+    QDir directory(WORDLISTS_RESOURCES_DIRECTORY);
+    QStringList files = directory.entryList(QDir::Filter::Files);
+    for (const QString& file : files)
+        ui->PassphraseWordlistsListWidget->addItem(file);
 }
 
 std::string PasswordGenerator::getSelectedCharaters() const

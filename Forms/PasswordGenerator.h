@@ -15,6 +15,7 @@ class PasswordGenerator : public QDialog
 public:
     explicit PasswordGenerator(QWidget *parent = nullptr);
     ~PasswordGenerator();
+    QString getValue() const;
 
 private slots:
     void generatePassword();

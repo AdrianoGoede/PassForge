@@ -3,8 +3,6 @@
 #include <botan-2/botan/numthry.h>
 #include <botan-2/botan/hex.h>
 
-Crypto::Crypto() {}
-
 void Crypto::wipeMemory(void *address, size_t bytes) { Botan::secure_scrub_memory(address, bytes); }
 
 void Crypto::getRandomUnsignedIntegers(uint32_t *buffer, size_t count, uint32_t min, uint32_t max)

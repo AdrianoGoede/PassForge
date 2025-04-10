@@ -18,9 +18,12 @@ public:
     ~MainWindow();
 
 private slots:
-    void on_pushButton_clicked();
+    void CreateNewDatabase();
+    void OpenPasswordGenerator();
+    void QuitApplication();
 
 private:
     Ui::MainWindow *ui;
 };
+
 #endif // MAINWINDOW_H

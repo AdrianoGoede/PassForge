@@ -11,24 +11,10 @@
    </rect>
   </property>
   <property name="windowTitle">
-   <string>MainWindow</string>
+   <string>PassForge</string>
   </property>
-  <widget class="QWidget" name="centralwidget">
-   <widget class="QPushButton" name="pushButton">
-    <property name="geometry">
-     <rect>
-      <x>170</x>
-      <y>110</y>
-      <width>80</width>
-      <height>25</height>
-     </rect>
-    </property>
-    <property name="text">
-     <string>PushButton</string>
-    </property>
-   </widget>
-  </widget>
-  <widget class="QMenuBar" name="menubar">
+  <widget class="QWidget" name="centralwidget"/>
+  <widget class="QMenuBar" name="MainWindowMenubar">
    <property name="geometry">
     <rect>
      <x>0</x>
@@ -37,8 +23,187 @@
      <height>22</height>
     </rect>
    </property>
+   <widget class="QMenu" name="MainWindowMenubarMenuDatabase">
+    <property name="title">
+     <string>Database</string>
+    </property>
+    <addaction name="ActionDatabaseNew"/>
+    <addaction name="ActionDatabaseOpen"/>
+    <addaction name="ActionDatabaseSave"/>
+    <addaction name="ActionDatabaseSaveAs"/>
+    <addaction name="separator"/>
+    <addaction name="ActionDatabaseSettings"/>
+    <addaction name="ActionDatabaseClose"/>
+    <addaction name="separator"/>
+    <addaction name="ActionApplicationQuit"/>
+   </widget>
+   <widget class="QMenu" name="MainWindowMenubarMenuEntries">
+    <property name="title">
+     <string>Entries</string>
+    </property>
+    <addaction name="ActionEntryNew"/>
+    <addaction name="ActionEntryEdit"/>
+    <addaction name="ActionEntryDuplicate"/>
+    <addaction name="ActionEntryDelete"/>
+    <addaction name="separator"/>
+    <addaction name="ActionMoveEntryUp"/>
+    <addaction name="ActionMoveEntryDown"/>
+    <addaction name="separator"/>
+    <addaction name="ActionCopyEntryUsername"/>
+    <addaction name="ActionCopyEntryPassword"/>
+    <addaction name="ActionCopyEntryAttribute"/>
+    <addaction name="separator"/>
+    <addaction name="ActionPerfomEntryAutoType"/>
+   </widget>
+   <widget class="QMenu" name="MainWindowMenubarMenuGroups">
+    <property name="title">
+     <string>Groups</string>
+    </property>
+    <addaction name="ActionGroupNew"/>
+    <addaction name="ActionGroupEdit"/>
+    <addaction name="ActionGroupDuplicate"/>
+    <addaction name="ActionGroupDelete"/>
+   </widget>
+   <widget class="QMenu" name="MainWindowMenubarMenuTools">
+    <property name="title">
+     <string>Tools</string>
+    </property>
+    <addaction name="ActionToolsPasswordGenerator"/>
+    <addaction name="ActionToolsSettings"/>
+   </widget>
+   <widget class="QMenu" name="MainWindowMenubarMenuHelp">
+    <property name="title">
+     <string>Help</string>
+    </property>
+    <addaction name="ActionAboutPassForge"/>
+   </widget>
+   <addaction name="MainWindowMenubarMenuDatabase"/>
+   <addaction name="MainWindowMenubarMenuEntries"/>
+   <addaction name="MainWindowMenubarMenuGroups"/>
+   <addaction name="MainWindowMenubarMenuTools"/>
+   <addaction name="MainWindowMenubarMenuHelp"/>
   </widget>
   <widget class="QStatusBar" name="statusbar"/>
+  <action name="ActionDatabaseNew">
+   <property name="text">
+    <string>New</string>
+   </property>
+  </action>
+  <action name="ActionDatabaseOpen">
+   <property name="text">
+    <string>Open</string>
+   </property>
+  </action>
+  <action name="ActionDatabaseSave">
+   <property name="text">
+    <string>Save</string>
+   </property>
+  </action>
+  <action name="ActionDatabaseSaveAs">
+   <property name="text">
+    <string>Save As</string>
+   </property>
+  </action>
+  <action name="ActionDatabaseClose">
+   <property name="text">
+    <string>Close</string>
+   </property>
+  </action>
+  <action name="ActionDatabaseSettings">
+   <property name="text">
+    <string>Settings</string>
+   </property>
+  </action>
+  <action name="ActionApplicationQuit">
+   <property name="text">
+    <string>Quit</string>
+   </property>
+  </action>
+  <action name="ActionEntryNew">
+   <property name="text">
+    <string>New</string>
+   </property>
+  </action>
+  <action name="ActionEntryEdit">
+   <property name="text">
+    <string>Edit</string>
+   </property>
+  </action>
+  <action name="ActionEntryDuplicate">
+   <property name="text">
+    <string>Duplicate</string>
+   </property>
+  </action>
+  <action name="ActionEntryDelete">
+   <property name="text">
+    <string>Delete</string>
+   </property>
+  </action>
+  <action name="ActionMoveEntryUp">
+   <property name="text">
+    <string>Move Up</string>
+   </property>
+  </action>
+  <action name="ActionMoveEntryDown">
+   <property name="text">
+    <string>Move Down</string>
+   </property>
+  </action>
+  <action name="ActionCopyEntryUsername">
+   <property name="text">
+    <string>Copy Username</string>
+   </property>
+  </action>
+  <action name="ActionCopyEntryPassword">
+   <property name="text">
+    <string>Copy Password</string>
+   </property>
+  </action>
+  <action name="ActionCopyEntryAttribute">
+   <property name="text">
+    <string>Copy Attribute</string>
+   </property>
+  </action>
+  <action name="ActionPerfomEntryAutoType">
+   <property name="text">
+    <string>Perfom Auto-Type</string>
+   </property>
+  </action>
+  <action name="ActionGroupNew">
+   <property name="text">
+    <string>New</string>
+   </property>
+  </action>
+  <action name="ActionGroupEdit">
+   <property name="text">
+    <string>Edit</string>
+   </property>
+  </action>
+  <action name="ActionGroupDuplicate">
+   <property name="text">
+    <string>Duplicate</string>
+   </property>
+  </action>
+  <action name="ActionGroupDelete">
+   <property name="text">
+    <string>Delete</string>
+   </property>
+  </action>
+  <action name="ActionToolsPasswordGenerator">
+   <property name="text">
+    <string>Password Generator</string>
+   </property>
+  </action>
+  <action name="ActionToolsSettings">
+   <property name="text">
+    <string>Settings</string>
+   </property>
+  </action>
+  <action name="ActionAboutPassForge">
+   <property name="text">
+    <string>About PassForge</string>
+   </property>
+  </action>
  </widget>
  <resources/>
  <connections/>

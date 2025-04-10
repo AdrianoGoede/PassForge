@@ -37,6 +37,9 @@ if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
         Configs/Configs.h
         Configs/Constants.h
         Resources/Wordlists.qrc
+        Forms/DatabaseCreator.h Forms/DatabaseCreator.cpp Forms/DatabaseCreator.ui
+
+
 
     )
 # Define target properties for Android with Qt 6 as:

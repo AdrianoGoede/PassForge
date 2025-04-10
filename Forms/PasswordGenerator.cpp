@@ -19,13 +19,18 @@ PasswordGenerator::PasswordGenerator(QWidget *parent) : QDialog(parent), ui(new 
     ui->setupUi(this);
     setHashingAlgorithms();
     setDefaultWordlists();
+
     connect(ui->PasswdGenPushButton, &QPushButton::clicked, this, &PasswordGenerator::generatePassword);
     connect(ui->PasswdCopyPushButton, &QPushButton::clicked, this, &PasswordGenerator::copyPasswordToClipboard);
     connect(ui->PassphraseWordlistsAddButton, &QPushButton::clicked, this, &PasswordGenerator::addWordlist);
     connect(ui->PassphraseWordlistsRemoveButton, &QPushButton::clicked, this, &PasswordGenerator::removeWordlist);
+    connect(ui->OkPushButton, &QPushButton::clicked, this, &QDialog::accept);
+    connect(ui->CancelPushButton, &QPushButton::clicked, this, &QDialog::reject);
 }
 
 PasswordGenerator::~PasswordGenerator() { delete ui; }
+
+QString PasswordGenerator::getValue() const{ return ui->PasswordLineEdit->text(); }
 
 void PasswordGenerator::generatePassword()
 {
@@ -91,6 +96,7 @@ QString PasswordGenerator::generatePassphrase()
 QString PasswordGenerator::generateHash() const
 {
     QString plainText = ui->HashPlainTextEdit->toPlainText();
+    if (plainText.isEmpty()) return QString();
     std::string hash = Crypto::getHash(plainText.toStdString(), ui->HashAlgorithmComboBox->currentText().toStdString().c_str());
     return QString(hash.c_str());
 }
@@ -131,8 +137,7 @@ void PasswordGenerator::removeWordlist()
 
 void PasswordGenerator::setHashingAlgorithms()
 {
-    std::vector<QString> algorithms({ SUPPORTED_HASHING_ALGORITHMS });
-    for (const QString& algorithm : algorithms)
+    for (const QString& algorithm : QStringList({ SUPPORTED_HASHING_ALGORITHMS }))
         ui->HashAlgorithmComboBox->addItem(algorithm);
 }
 

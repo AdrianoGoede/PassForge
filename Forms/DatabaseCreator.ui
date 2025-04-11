@@ -53,6 +53,9 @@
    </property>
   </widget>
   <widget class="QPushButton" name="OkPushButton">
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
    <property name="geometry">
     <rect>
      <x>145</x>
@@ -79,7 +82,7 @@
     <iconset theme="QIcon::ThemeIcon::DocumentSave"/>
    </property>
   </widget>
-  <widget class="QWidget" name="">
+  <widget class="QWidget" name="layoutWidget">
    <property name="geometry">
     <rect>
      <x>0</x>
@@ -297,6 +300,9 @@
         <bold>true</bold>
        </font>
       </property>
+      <property name="echoMode">
+       <enum>QLineEdit::EchoMode::Password</enum>
+      </property>
       <property name="alignment">
        <set>Qt::AlignmentFlag::AlignCenter</set>
       </property>
@@ -325,6 +331,9 @@
         <pointsize>10</pointsize>
         <bold>true</bold>
        </font>
+      </property>
+      <property name="echoMode">
+       <enum>QLineEdit::EchoMode::Password</enum>
       </property>
       <property name="alignment">
        <set>Qt::AlignmentFlag::AlignCenter</set>

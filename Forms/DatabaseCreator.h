@@ -15,6 +15,9 @@ public:
     explicit DatabaseCreator(QWidget *parent = nullptr);
     ~DatabaseCreator();
 
+private slots:
+    void validatePasswordInput();
+
 private:
     Ui::DatabaseCreator *ui;
 

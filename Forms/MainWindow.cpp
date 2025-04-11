@@ -1,6 +1,5 @@
 #include "MainWindow.h"
 #include "ui_MainWindow.h"
-
 #include "DatabaseCreator.h"
 #include "PasswordGenerator.h"
 

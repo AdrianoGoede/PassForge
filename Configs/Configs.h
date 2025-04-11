@@ -8,4 +8,6 @@
 #define SUPPORTED_KEY_DERIVATION_FUNCTIONS   "PBKDF2","Scrypt","Argon2id"
 #define WORDLISTS_RESOURCES_DIRECTORY        ":/Wordlists"
 
+#define DATABASE_MIN_PASSWORD_LENGTH         8
+
 #endif // CONFIGS_H

@@ -19,6 +19,7 @@ public:
 
 private slots:
     void generatePassword();
+    void validatePassword();
     void copyPasswordToClipboard();
     void addWordlist();
     void removeWordlist();

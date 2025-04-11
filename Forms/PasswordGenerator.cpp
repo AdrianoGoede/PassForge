@@ -24,6 +24,7 @@ PasswordGenerator::PasswordGenerator(QWidget *parent) : QDialog(parent), ui(new 
     connect(ui->PasswdCopyPushButton, &QPushButton::clicked, this, &PasswordGenerator::copyPasswordToClipboard);
     connect(ui->PassphraseWordlistsAddButton, &QPushButton::clicked, this, &PasswordGenerator::addWordlist);
     connect(ui->PassphraseWordlistsRemoveButton, &QPushButton::clicked, this, &PasswordGenerator::removeWordlist);
+    connect(ui->PasswordLineEdit, &QLineEdit::textChanged, this, &PasswordGenerator::validatePassword);
     connect(ui->OkPushButton, &QPushButton::clicked, this, &QDialog::accept);
     connect(ui->CancelPushButton, &QPushButton::clicked, this, &QDialog::reject);
 }
@@ -39,6 +40,13 @@ void PasswordGenerator::generatePassword()
         case 1: ui->PasswordLineEdit->setText(this->generatePassphrase()); break;
         case 2: ui->PasswordLineEdit->setText(this->generateHash()); break;
     }
+}
+
+void PasswordGenerator::validatePassword()
+{
+    QString passwd = ui->PasswordLineEdit->text();
+    ui->OkPushButton->setEnabled(!passwd.isEmpty());
+    Crypto::wipeMemory(passwd.data(), (sizeof(QChar) * passwd.length()));
 }
 
 QString PasswordGenerator::generateRandomPassword() const

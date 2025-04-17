@@ -3,6 +3,7 @@
 
 #include <QDialog>
 #include <QString>
+#include <QByteArray>
 
 namespace Ui {
 class PasswordGenerator;
@@ -33,9 +34,9 @@ private:
     void setDefaultWordlists();
     void loadWordlist();
     QString getSelectedCharaters() const;
-    QString generateRandomPassword() const;
-    QString generatePassphrase();
-    QString generateHash() const;
+    QByteArray generateRandomPassword() const;
+    QByteArray generatePassphrase();
+    QByteArray generateHash() const;
 };
 
 #endif // PASSWORDGENERATOR_H

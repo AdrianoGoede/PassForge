@@ -2,6 +2,7 @@
 #define MAINWINDOW_H
 
 #include <QMainWindow>
+#include "../Database/DatabaseHandler.h"
 
 QT_BEGIN_NAMESPACE
 namespace Ui {
@@ -24,6 +25,7 @@ private slots:
 
 private:
     Ui::MainWindow *ui;
+    std::unique_ptr<DatabaseHandler> databaseHandler = nullptr;
 };
 
 #endif // MAINWINDOW_H

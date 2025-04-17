@@ -15,7 +15,7 @@ set(BOTAN_LIBRARY "/usr/lib/x86_64-linux-gnu/libbotan-2.so")
 include_directories(${BOTAN_INCLUDE_DIR})
 link_directories(${BOTAN_LIBRARY})
 
-find_package(QT NAMES Qt6 Qt5 REQUIRED COMPONENTS Widgets LinguistTools Botan2)
+find_package(QT NAMES Qt6 Qt5 REQUIRED COMPONENTS Widgets LinguistTools Botan2 SQLite3)
 find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Widgets LinguistTools)
 
 set(TS_FILES PassForge_en_US.ts)
@@ -30,18 +30,21 @@ set(PROJECT_SOURCES
 
 if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
     qt_add_executable(PassForge
-        MANUAL_FINALIZATION
-        ${PROJECT_SOURCES}
-        Forms/PasswordGenerator.h Forms/PasswordGenerator.cpp Forms/PasswordGenerator.ui
-        Crypto/Crypto.h Crypto/Crypto.cpp
-        Configs/Configs.h
-        Configs/Constants.h
-        Resources/Wordlists.qrc
-        Forms/DatabaseCreator.h Forms/DatabaseCreator.cpp Forms/DatabaseCreator.ui
-
-
-
-    )
+    MANUAL_FINALIZATION
+    ${PROJECT_SOURCES}
+    Forms/PasswordGenerator.h
+    Forms/PasswordGenerator.cpp
+    Forms/PasswordGenerator.ui
+    Crypto/Crypto.h Crypto/Crypto.cpp
+    Configs/Configs.h
+    Configs/Constants.h
+    Resources/Wordlists.qrc
+    Forms/DatabaseCreator.h
+    Forms/DatabaseCreator.cpp
+    Forms/DatabaseCreator.ui
+    Database/DatabaseHandler.h
+    Database/DatabaseHandler.cpp
+)
 # Define target properties for Android with Qt 6 as:
 #    set_property(TARGET PassForge APPEND PROPERTY QT_ANDROID_PACKAGE_SOURCE_DIR
 #                 ${CMAKE_CURRENT_SOURCE_DIR}/android)
@@ -64,7 +67,7 @@ else()
     qt5_create_translation(QM_FILES ${CMAKE_SOURCE_DIR} ${TS_FILES})
 endif()
 
-target_link_libraries(PassForge PRIVATE Qt${QT_VERSION_MAJOR}::Widgets ${BOTAN_LIBRARY})
+target_link_libraries(PassForge PRIVATE Qt${QT_VERSION_MAJOR}::Widgets ${BOTAN_LIBRARY} sqlite3)
 
 # Qt for iOS sets MACOSX_BUNDLE_GUI_IDENTIFIER automatically since Qt 6.1.
 # If you are developing for iOS or macOS you should consider setting an

@@ -1,6 +1,7 @@
 #ifndef DATABASECREATOR_H
 #define DATABASECREATOR_H
 
+#include "../Database/DatabaseHandler.h"
 #include <QDialog>
 
 namespace Ui {
@@ -14,13 +15,16 @@ class DatabaseCreator : public QDialog
 public:
     explicit DatabaseCreator(QWidget *parent = nullptr);
     ~DatabaseCreator();
+    DatabaseHandler* getDatabaseHandler();
 
 private slots:
-    void validatePasswordInput();
+    void selectFilePath();
+    void setOkButtonEnabled();
 
 private:
     Ui::DatabaseCreator *ui;
 
+    bool validateCurrentState();
     void setEncryptionAlgorithms();
     void setEncryptionAlgorithmKeySettings();
     void setKeyDerivationFunctions();

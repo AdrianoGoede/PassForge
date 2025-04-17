@@ -2,6 +2,7 @@
 #include "ui_MainWindow.h"
 #include "DatabaseCreator.h"
 #include "PasswordGenerator.h"
+#include <QMessageBox>
 
 MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWindow)
 {
@@ -16,7 +17,12 @@ MainWindow::~MainWindow() { delete ui; }
 void MainWindow::CreateNewDatabase()
 {
     DatabaseCreator creator(this);
-    creator.exec();
+    if (creator.exec() == QDialog::Accepted) {
+        try {
+            this->databaseHandler.reset(creator.getDatabaseHandler());
+        }
+        catch (const std::exception& exception) { QMessageBox::critical(this, "Error", exception.what()); }
+    }
 }
 
 void MainWindow::OpenPasswordGenerator()

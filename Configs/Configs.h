@@ -7,6 +7,7 @@
 #define SUPPORTED_STREAM_CYPHER_KEY_SETTINGS ""
 #define SUPPORTED_KEY_DERIVATION_FUNCTIONS   "PBKDF2","Scrypt","Argon2id"
 #define WORDLISTS_RESOURCES_DIRECTORY        ":/Wordlists"
+#define DATABASE_FILE_FILTER                 "PassForge Databases (*.pfdb)"
 
 #define DATABASE_MIN_PASSWORD_LENGTH         8
 

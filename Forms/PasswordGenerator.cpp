@@ -35,11 +35,15 @@ QString PasswordGenerator::getValue() const{ return ui->PasswordLineEdit->text()
 
 void PasswordGenerator::generatePassword()
 {
+    QByteArray value;
     switch (ui->OptionsTabWidget->currentIndex()) {
-        case 0: ui->PasswordLineEdit->setText(this->generateRandomPassword()); break;
-        case 1: ui->PasswordLineEdit->setText(this->generatePassphrase()); break;
-        case 2: ui->PasswordLineEdit->setText(this->generateHash()); break;
+        case 0: value.append(this->generateRandomPassword()); break;
+        case 1: value.append(this->generatePassphrase()); break;
+        case 2: value.append(this->generateHash()); break;
+        default: return;
     }
+    ui->PasswordLineEdit->setText(value);
+    Crypto::wipeMemory(value.data(), (sizeof(char) * value.length()));
 }
 
 void PasswordGenerator::validatePassword()
@@ -49,28 +53,24 @@ void PasswordGenerator::validatePassword()
     Crypto::wipeMemory(passwd.data(), (sizeof(QChar) * passwd.length()));
 }
 
-QString PasswordGenerator::generateRandomPassword() const
+QByteArray PasswordGenerator::generateRandomPassword() const
 {
     QString selectedChars = this->getSelectedCharaters();
-    if (selectedChars.isEmpty()) return QString();
+    if (selectedChars.isEmpty()) return QByteArray();
 
     size_t newPasswordLength = ui->PasswdLengthSpinBox->value();
     uint32_t randomValues[newPasswordLength];
     Crypto::getRandomUnsignedIntegers(randomValues, newPasswordLength, 0, (selectedChars.length() - 1));
 
-    char newPassword[newPasswordLength + 1];
+    QByteArray result;
     for (uint32_t i = 0; i < newPasswordLength; i++)
-        newPassword[i] = (selectedChars.at(randomValues[i]).toLatin1());
-    newPassword[newPasswordLength] = '\0';
-    QString result(newPassword);
+        result.append((selectedChars.at(randomValues[i]).toLatin1()));
 
-    Crypto::wipeMemory(newPassword, sizeof(newPassword));
     Crypto::wipeMemory(randomValues, sizeof(randomValues));
-
     return result;
 }
 
-QString PasswordGenerator::generatePassphrase()
+QByteArray PasswordGenerator::generatePassphrase()
 {
     this->loadWordlist();
 
@@ -79,34 +79,32 @@ QString PasswordGenerator::generatePassphrase()
     Crypto::getRandomUnsignedIntegers(randomValues, newPasswordLength, 0, (this->wordlist.size() - 1));
 
     QByteArray separator(!ui->PassphraseSeparatorLineEdit->text().isEmpty() ? ui->PassphraseSeparatorLineEdit->text().toUtf8() : " ");
-    QByteArray buffer;
+    QByteArray result;
     for (uint32_t i = 0; i < newPasswordLength; i++) {
-        if (i > 0) buffer.append(separator);
+        if (i > 0) result.append(separator);
         QByteArray word = this->wordlist.at(randomValues[i]).toUtf8();
         switch (ui->PassphraseWordCaseComboBox->currentIndex()) {
-            case 0: buffer.append(word.toLower()); break;
-            case 1: buffer.append(word.toUpper()); break;
+            case 0: result.append(word.toLower()); break;
+            case 1: result.append(word.toUpper()); break;
             case 2: {
-                buffer.append(word.left(1).toUpper());
-                buffer.append(word.mid(1).toLower());
+                result.append(word.left(1).toUpper());
+                result.append(word.mid(1).toLower());
             }; break;
         }
-        Crypto::wipeMemory(word.data(), word.length());
+        Crypto::wipeMemory(word.data(), (sizeof(char) * word.length()));
     }
-    QString result = QString::fromUtf8(buffer);
 
-    Crypto::wipeMemory(buffer.data(), buffer.length());
     Crypto::wipeMemory(randomValues, sizeof(randomValues));
-
     return result;
 }
 
-QString PasswordGenerator::generateHash() const
+QByteArray PasswordGenerator::generateHash() const
 {
-    QString plainText = ui->HashPlainTextEdit->toPlainText();
-    if (plainText.isEmpty()) return QString();
+    QByteArray plainText(ui->HashPlainTextEdit->toPlainText().toUtf8());
+    if (plainText.isEmpty()) return QByteArray();
     std::string hash = Crypto::getHash(plainText.toStdString(), ui->HashAlgorithmComboBox->currentText().toStdString().c_str());
-    return QString(hash.c_str());
+    Crypto::wipeMemory(plainText.data(), (sizeof(char) * plainText.length()));
+    return QByteArray(hash.c_str());
 }
 
 void PasswordGenerator::copyPasswordToClipboard()

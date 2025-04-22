@@ -15,5 +15,9 @@
 #define DATABASE_BASIC_DATA_ENC_ALGORITHM       "EncryptionAlgorithm"
 #define DATABASE_BASIC_DATA_ENC_KEY_LEN         "EncryptionKeyLength"
 #define DATABASE_BASIC_DATA_KEY_DERIVATION_FUNC "KeyDerivationFunction"
+#define DATABASE_BASIC_DATA_KEY_DERIVATION_SALT "KeyDerivationSalt"
+
+#define DATABASE_ENTRY_TYPE_CREDENTIAL          1
+#define DATABASE_ENTRY_TYPE_CRYPTOCURRENCY      2
 
 #endif // CONSTANTS_H

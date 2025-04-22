@@ -1,16 +1,18 @@
 #ifndef DATABASEHANDLER_H
 #define DATABASEHANDLER_H
 
-#include <QString>
+#include "DatabaseEntry.h"
 #include <QByteArray>
 #include <sqlite3.h>
 
 struct DatabaseHandlerOptions
 {
-    QString Description;
-    QString EncryptionAlgorithm;
+    std::string Description;
+    std::string EncryptionAlgorithm;
     uint16_t EncryptionKeyLength;
-    QString KeyDerivationFunction;
+    std::string KeyDerivationFunction;
+    uint32_t KeyDerivationRounds;
+    std::string KeySalt;
 };
 
 class DatabaseHandler
@@ -18,13 +20,18 @@ class DatabaseHandler
 public:
     DatabaseHandler(const QString& filePath, const QByteArray& password, const DatabaseHandlerOptions* options = nullptr);
     ~DatabaseHandler();
+    void createNewEntry(const DatabaseEntry& entry);
 
 private:
     sqlite3* database = nullptr;
-    QByteArray password;
+    DatabaseHandlerOptions dbOptions;
+    std::string encryptionKey;
 
-    void setNewDatabaseStructure(const DatabaseHandlerOptions* options = nullptr);
-    void createBasicInfoStructure(const DatabaseHandlerOptions* options = nullptr);
+    void setNewDatabaseStructure();
+    void createBasicInfoStructure();
+    void createSettingsStructure();
+    void createSecretsStructure();
+    void fetchDatabaseBasicData();
 };
 
 #endif // DATABASEHANDLER_H

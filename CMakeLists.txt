@@ -44,6 +44,12 @@ if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
     Forms/DatabaseCreator.ui
     Database/DatabaseHandler.h
     Database/DatabaseHandler.cpp
+    Database/CredentialEntry.h
+    Database/CredentialEntry.cpp
+    Database/CryptocurrencyEntry.h
+    Database/CryptocurrencyEntry.cpp
+    Database/DatabaseEntry.h
+    Database/DatabaseEntry.cpp
 )
 # Define target properties for Android with Qt 6 as:
 #    set_property(TARGET PassForge APPEND PROPERTY QT_ANDROID_PACKAGE_SOURCE_DIR

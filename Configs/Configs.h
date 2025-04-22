@@ -10,5 +10,6 @@
 #define DATABASE_FILE_FILTER                 "PassForge Databases (*.pfdb)"
 
 #define DATABASE_MIN_PASSWORD_LENGTH         8
+#define CIPHERTEXT_IV_LENGTH_BYTES           12
 
 #endif // CONFIGS_H

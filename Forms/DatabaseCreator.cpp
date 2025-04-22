@@ -30,10 +30,11 @@ DatabaseHandler* DatabaseCreator::getDatabaseHandler()
     if (!this->validateCurrentState()) return nullptr; // TO DO!
 
     DatabaseHandlerOptions options {
-        ui->DatabaseDescriptionLineEdit->text().trimmed(),
-        ui->DatabaseEncryptionAlgorithmComboBox->currentText().trimmed(),
+        ui->DatabaseDescriptionLineEdit->text().trimmed().toStdString(),
+        ui->DatabaseEncryptionAlgorithmComboBox->currentText().trimmed().toStdString(),
         (uint16_t)ui->DatabaseEncryptionKeyLengthComboBox->currentText().trimmed().toInt(),
-        ui->DatabaseKeyDerivationFunctionComboBox->currentText().trimmed()
+        ui->DatabaseKeyDerivationFunctionComboBox->currentText().trimmed().toStdString(),
+        (uint32_t)ui->DatabaseKeyDerivationTransformRoundsSpinBox->value()
     };
     return new DatabaseHandler(ui->DatabaseNameLineEdit->text(), ui->DatabasePasswordLineEdit->text().toUtf8(), &options);
 }

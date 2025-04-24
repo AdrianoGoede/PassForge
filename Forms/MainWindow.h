@@ -20,6 +20,7 @@ public:
 
 private slots:
     void CreateNewDatabase();
+    void OpenDatabaseSettings();
     void OpenPasswordGenerator();
     void QuitApplication();
 

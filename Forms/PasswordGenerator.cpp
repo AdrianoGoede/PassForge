@@ -43,14 +43,14 @@ void PasswordGenerator::generatePassword()
         default: return;
     }
     ui->PasswordLineEdit->setText(value);
-    Crypto::wipeMemory(value.data(), (sizeof(char) * value.length()));
+    Crypto::wipeMemory(value.data(), value.length());
 }
 
 void PasswordGenerator::validatePassword()
 {
-    QString passwd = ui->PasswordLineEdit->text();
+    QByteArray passwd = ui->PasswordLineEdit->text().toUtf8();
     ui->OkPushButton->setEnabled(!passwd.isEmpty());
-    Crypto::wipeMemory(passwd.data(), (sizeof(QChar) * passwd.length()));
+    Crypto::wipeMemory(passwd.data(), passwd.length());
 }
 
 QByteArray PasswordGenerator::generateRandomPassword() const

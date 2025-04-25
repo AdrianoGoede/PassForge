@@ -27,7 +27,7 @@ DatabaseCreator::~DatabaseCreator() { delete ui; }
 
 DatabaseHandler* DatabaseCreator::getDatabaseHandler()
 {
-    if (!this->validateCurrentState()) return nullptr; // TO DO!
+    this->validateCurrentState();
 
     DatabaseHandlerOptions options {
         ui->DatabaseDescriptionLineEdit->text().trimmed().toStdString(),
@@ -39,22 +39,35 @@ DatabaseHandler* DatabaseCreator::getDatabaseHandler()
     return new DatabaseHandler(ui->DatabaseNameLineEdit->text(), ui->DatabasePasswordLineEdit->text().toUtf8(), &options);
 }
 
-void DatabaseCreator::selectFilePath() { ui->DatabaseNameLineEdit->setText(QFileDialog::getSaveFileName(this, "Select database path and name", QString(), DATABASE_FILE_FILTER)); }
+void DatabaseCreator::selectFilePath() { ui->DatabaseNameLineEdit->setText(QFileDialog::getSaveFileName(this, "Select location", QString(), DATABASE_FILE_FILTER)); }
 
-void DatabaseCreator::setOkButtonEnabled() { ui->OkPushButton->setEnabled(this->validateCurrentState()); }
+void DatabaseCreator::setOkButtonEnabled()
+{
+    try {
+        this->validateCurrentState();
+        ui->OkPushButton->setEnabled(true);
+    }
+    catch (const std::runtime_error& error) { ui->OkPushButton->setEnabled(false); }
+}
 
-bool DatabaseCreator::validateCurrentState()
+void DatabaseCreator::validateCurrentState()
 {
     QString dbName = ui->DatabaseNameLineEdit->text();
-    QString passwd1 = ui->DatabasePasswordLineEdit->text();
-    QString passwd2 = ui->DatabasePasswordRepeatLineEdit->text();
+    QByteArray passwd1 = ui->DatabasePasswordLineEdit->text().toUtf8();
+    QByteArray passwd2 = ui->DatabasePasswordRepeatLineEdit->text().toUtf8();
 
-    bool result = (!dbName.isEmpty() && passwd1.length() >= DATABASE_MIN_PASSWORD_LENGTH && passwd1 == passwd2);
+    QString error;
+    if (dbName.isEmpty())
+        error += "Database name cannot be empty";
+    else if (passwd1.length() < DATABASE_MIN_PASSWORD_LENGTH)
+        error += QString("Password must be at least %1 characters long").arg(DATABASE_MIN_PASSWORD_LENGTH);
+    else if (passwd1 != passwd2)
+        error += "The passwords don't match";
 
-    Crypto::wipeMemory(passwd1.data(), (sizeof(QChar) * passwd1.length()));
-    Crypto::wipeMemory(passwd2.data(), (sizeof(QChar) * passwd2.length()));
+    Crypto::wipeMemory(passwd1.data(), passwd1.length());
+    Crypto::wipeMemory(passwd2.data(), passwd2.length());
 
-    return result;
+    if (!error.isEmpty()) throw std::runtime_error(error.toStdString());
 }
 
 void DatabaseCreator::setEncryptionAlgorithms()

@@ -20,6 +20,7 @@ public:
 
 private slots:
     void CreateNewDatabase();
+    void OpenExistingDatabase();
     void OpenDatabaseSettings();
     void OpenPasswordGenerator();
     void QuitApplication();
@@ -27,6 +28,8 @@ private slots:
 private:
     Ui::MainWindow *ui;
     std::unique_ptr<DatabaseHandler> databaseHandler = nullptr;
+
+    void loadDatabase();
 };
 
 #endif // MAINWINDOW_H

@@ -24,7 +24,7 @@ private slots:
 private:
     Ui::DatabaseCreator *ui;
 
-    bool validateCurrentState();
+    void validateCurrentState();
     void setEncryptionAlgorithms();
     void setEncryptionAlgorithmKeySettings();
     void setKeyDerivationFunctions();

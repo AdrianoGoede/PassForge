@@ -14,7 +14,7 @@
    <string>PassForge</string>
   </property>
   <widget class="QWidget" name="CentralWidget">
-   <widget class="QWidget" name="">
+   <widget class="QWidget" name="layoutWidget">
     <property name="geometry">
      <rect>
       <x>10</x>
@@ -443,6 +443,9 @@
     <addaction name="ActionApplicationQuit"/>
    </widget>
    <widget class="QMenu" name="MainWindowMenubarMenuEntries">
+    <property name="enabled">
+     <bool>false</bool>
+    </property>
     <property name="title">
      <string>Entries</string>
     </property>
@@ -461,6 +464,9 @@
     <addaction name="ActionPerfomEntryAutoType"/>
    </widget>
    <widget class="QMenu" name="MainWindowMenubarMenuGroups">
+    <property name="enabled">
+     <bool>false</bool>
+    </property>
     <property name="title">
      <string>Groups</string>
     </property>
@@ -500,21 +506,33 @@
    </property>
   </action>
   <action name="ActionDatabaseSave">
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
    <property name="text">
     <string>Save</string>
    </property>
   </action>
   <action name="ActionDatabaseSaveAs">
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
    <property name="text">
     <string>Save As</string>
    </property>
   </action>
   <action name="ActionDatabaseClose">
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
    <property name="text">
     <string>Close</string>
    </property>
   </action>
   <action name="ActionDatabaseSettings">
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
    <property name="text">
     <string>Settings</string>
    </property>

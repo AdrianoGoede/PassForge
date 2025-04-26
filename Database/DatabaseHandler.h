@@ -25,7 +25,7 @@ public:
 private:
     sqlite3* database = nullptr;
     DatabaseHandlerOptions dbOptions;
-    std::string encryptionKey;
+    QByteArray encryptionKey;
 
     void setNewDatabaseStructure();
     void createBasicInfoStructure();

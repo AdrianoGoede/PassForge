@@ -17,6 +17,7 @@ DatabaseCreator::DatabaseCreator(QWidget *parent) : QDialog(parent), ui(new Ui::
     connect(ui->DatabaseNameSelectPushButton, &QPushButton::clicked, this, &DatabaseCreator::selectFilePath);
     connect(ui->DatabaseEncryptionAlgorithmComboBox, &QComboBox::currentIndexChanged, this, &DatabaseCreator::setEncryptionAlgorithmKeySettings);
     connect(ui->DatabaseNameLineEdit, &QLineEdit::textChanged, this, &DatabaseCreator::setOkButtonEnabled);
+    connect(ui->DatabaseKeyDerivationFunctionComboBox, &QComboBox::currentTextChanged, this, &DatabaseCreator::setIterationSelector);
     connect(ui->DatabasePasswordLineEdit, &QLineEdit::textChanged, this, &DatabaseCreator::setOkButtonEnabled);
     connect(ui->DatabasePasswordRepeatLineEdit, &QLineEdit::textChanged, this, &DatabaseCreator::setOkButtonEnabled);
     connect(ui->OkPushButton, &QPushButton::clicked, this, &QDialog::accept);
@@ -40,6 +41,30 @@ DatabaseHandler* DatabaseCreator::getDatabaseHandler()
 }
 
 void DatabaseCreator::selectFilePath() { ui->DatabaseNameLineEdit->setText(QFileDialog::getSaveFileName(this, "Select location", QString(), DATABASE_FILE_FILTER)); }
+
+void DatabaseCreator::setIterationSelector(const QString& selected)
+{
+    int min, max;
+
+    if (selected == "PBKDF2") {
+        min = KEY_DERIVATION_PBKDF2_MIN_ITERATIONS;
+        max = KEY_DERIVATION_PBKDF2_MAX_ITERATIONS;
+    }
+    else if (selected == "Scrypt") {
+        min = KEY_DERIVATION_SCRYPT_MIN_ITERATIONS;
+        max = KEY_DERIVATION_SCRYPT_MAX_ITERATIONS;
+    }
+    else if (selected == "Argon2id") {
+        // TO DO!
+    }
+    else {
+        min = 0;
+        max = 0;
+    }
+
+    ui->DatabaseKeyDerivationTransformRoundsSpinBox->setMinimum(min);
+    ui->DatabaseKeyDerivationTransformRoundsSpinBox->setMaximum(max);
+}
 
 void DatabaseCreator::setOkButtonEnabled()
 {

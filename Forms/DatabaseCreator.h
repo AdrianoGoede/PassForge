@@ -3,6 +3,7 @@
 
 #include "../Database/DatabaseHandler.h"
 #include <QDialog>
+#include <QString>
 
 namespace Ui {
 class DatabaseCreator;
@@ -19,6 +20,7 @@ public:
 
 private slots:
     void selectFilePath();
+    void setIterationSelector(const QString& selected);
     void setOkButtonEnabled();
 
 private:

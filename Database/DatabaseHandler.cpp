@@ -21,7 +21,14 @@ DatabaseHandler::DatabaseHandler(const QString& filePath, const QByteArray& pass
     else
         this->fetchDatabaseBasicData();
 
-    this->encryptionKey = Crypto::deriveKeyPbkdf2(password.data(), password.size(), this->dbOptions.KeySalt, this->dbOptions.EncryptionKeyLength, this->dbOptions.KeyDerivationRounds);
+    if (options->KeyDerivationFunction == "PBKDF2")
+        this->encryptionKey = Crypto::deriveKeyPbkdf2(password.data(), this->dbOptions.KeySalt, this->dbOptions.EncryptionKeyLength, this->dbOptions.KeyDerivationRounds);
+    else if (options->KeyDerivationFunction == "Scrypt")
+        this->encryptionKey = Crypto::deriveKeyScrypt(password.data(), password.length(), this->dbOptions.KeySalt, this->dbOptions.EncryptionKeyLength, this->dbOptions.KeyDerivationRounds);
+    else if (options->KeyDerivationFunction == "Argon2id") {
+        // TO DO!
+    }
+    else { throw std::runtime_error("Key derivation function not supported"); }
 }
 
 DatabaseHandler::~DatabaseHandler()
@@ -59,7 +66,7 @@ void DatabaseHandler::setNewDatabaseStructure()
 
 void DatabaseHandler::createBasicInfoStructure()
 {
-    std::string sql("CREATE TABLE basic_data ( entry_name VARCHAR(100) NOT NULL PRIMARY KEY, value VARCHAR(1000) NOT NULL );");
+    std::string sql("CREATE TABLE basic_data ( entry_name VARCHAR(100) NOT NULL PRIMARY KEY, value BLOB NOT NULL );");
     if (sqlite3_exec(this->database, sql.data(), nullptr, nullptr, nullptr) != SQLITE_OK)
         throw std::runtime_error(sqlite3_errmsg(this->database));
 

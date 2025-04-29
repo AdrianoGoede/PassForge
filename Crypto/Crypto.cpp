@@ -4,7 +4,9 @@
 #include <botan-2/botan/numthry.h>
 #include <botan-2/botan/pbkdf.h>
 #include <botan-2/botan/scrypt.h>
+#include <botan-2/botan/argon2.h>
 #include <botan-2/botan/hex.h>
+#include <botan-2/botan/system_rng.h>
 
 void Crypto::wipeMemory(void *address, size_t bytes) { Botan::secure_scrub_memory(address, bytes); }
 
@@ -35,7 +37,7 @@ QByteArray Crypto::generateSalt(size_t length)
     return QByteArray(reinterpret_cast<const char*>(salt.data()), static_cast<int>(salt.size()));
 }
 
-QByteArray Crypto::deriveKeyPbkdf2(const char *password, const std::string& salt, size_t keyLength, size_t iterations)
+QByteArray Crypto::deriveKeyPbkdf2(const QByteArray& password, const QByteArray& salt, size_t keyLength, size_t iterations)
 {
     std::unique_ptr<Botan::PBKDF> derivationFunction = Botan::PBKDF::create("PBKDF2(SHA-256)");
     if (!derivationFunction) throw std::runtime_error("PBKDF2 not available");
@@ -46,16 +48,33 @@ QByteArray Crypto::deriveKeyPbkdf2(const char *password, const std::string& salt
     return QByteArray(reinterpret_cast<const char*>(key.begin()), static_cast<int>(key.length()));
 }
 
-QByteArray Crypto::deriveKeyScrypt(const char *password, size_t passwordLength, const std::string &salt, size_t keyLength, size_t iterations)
+QByteArray Crypto::deriveKeyScrypt(const QByteArray& password, const QByteArray &salt, size_t keyLength, size_t iterations)
 {
     size_t cost_param = (1 << (KEY_DERIVATION_SCRYPT_COST_PARAM + iterations));
     Botan::Scrypt derivationFunction(cost_param, KEY_DERIVATION_SCRYPT_BLOCK_SIZE, KEY_DERIVATION_SCRYPT_PARALLELIZATION);
     Botan::secure_vector<uint8_t> buffer(keyLength);
-    derivationFunction.derive_key(buffer.data(), keyLength, password, passwordLength, reinterpret_cast<const uint8_t*>(salt.data()), salt.length());
+    derivationFunction.derive_key(buffer.data(), keyLength, password, password.length(), reinterpret_cast<const uint8_t*>(salt.data()), salt.length());
     return QByteArray(reinterpret_cast<const char*>(buffer.data()), static_cast<int>(buffer.size()));
 }
 
-QByteArray Crypto::encryptString(const std::string& plaintext, const std::string& key, const std::string& algorithm)
+QByteArray Crypto::deriveKeyArgon2id(const QByteArray& password, const QByteArray& salt, size_t keyLength, size_t iterations)
+{
+    Botan::secure_vector<uint8_t> buffer(keyLength);
+    Botan::argon2(
+        buffer.data(), keyLength,
+        password.data(), password.length(),
+        reinterpret_cast<const uint8_t*>(salt.data()), salt.length(),
+        nullptr, 0, // no secret key
+        nullptr, 0, // no additional data
+        KEY_DERIVATION_ARGON2_ALGORITHM_TYPE,
+        KEY_DERIVATION_ARGON2_PARALLELISM,
+        KEY_DERIVATION_ARGON2_MEMORY,
+        iterations
+    );
+    return QByteArray(reinterpret_cast<const char*>(buffer.data()), static_cast<int>(buffer.size()));
+}
+
+QByteArray Crypto::encryptString(const QByteArray& plaintext, const QByteArray& key, const QString& algorithm)
 {
     std::unique_ptr<Botan::Cipher_Mode> cipher = Botan::Cipher_Mode::create("AES-256/GCM", Botan::ENCRYPTION); // TO DO!
     if (!cipher) throw std::runtime_error("Encryption algorithm not supported");

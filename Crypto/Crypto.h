@@ -11,9 +11,10 @@ public:
     static void getRandomUnsignedIntegers(uint32_t* buffer, size_t count, uint32_t min, uint32_t max);
     static QByteArray getHash(const std::string& plainText, const std::string& algorithm);
     static QByteArray generateSalt(size_t length);
-    static QByteArray deriveKeyPbkdf2(const char* password, const std::string& salt, size_t keyLength, size_t iterations);
-    static QByteArray deriveKeyScrypt(const char* password, size_t passwordLength, const std::string& salt, size_t keyLength, size_t iterations);
-    static QByteArray encryptString(const std::string& plaintext, const std::string& key, const std::string& algorithm);
+    static QByteArray deriveKeyPbkdf2(const QByteArray& password, const QByteArray& salt, size_t keyLength, size_t iterations);
+    static QByteArray deriveKeyScrypt(const QByteArray& password, const QByteArray& salt, size_t keyLength, size_t iterations);
+    static QByteArray deriveKeyArgon2id(const QByteArray& password, const QByteArray& salt, size_t keyLength, size_t iterations);
+    static QByteArray encryptString(const QByteArray& plaintext, const QByteArray& key, const QString& algorithm);
 };
 
 #endif // CRYPTO_H

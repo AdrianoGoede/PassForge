@@ -31,10 +31,10 @@ DatabaseHandler* DatabaseCreator::getDatabaseHandler()
     this->validateCurrentState();
 
     DatabaseHandlerOptions options {
-        ui->DatabaseDescriptionLineEdit->text().trimmed().toStdString(),
-        ui->DatabaseEncryptionAlgorithmComboBox->currentText().trimmed().toStdString(),
+        ui->DatabaseDescriptionLineEdit->text().trimmed(),
+        ui->DatabaseEncryptionAlgorithmComboBox->currentText().trimmed(),
         (uint16_t)ui->DatabaseEncryptionKeyLengthComboBox->currentText().trimmed().toInt(),
-        ui->DatabaseKeyDerivationFunctionComboBox->currentText().trimmed().toStdString(),
+        ui->DatabaseKeyDerivationFunctionComboBox->currentText().trimmed(),
         (uint32_t)ui->DatabaseKeyDerivationTransformRoundsSpinBox->value()
     };
     return new DatabaseHandler(ui->DatabaseNameLineEdit->text(), ui->DatabasePasswordLineEdit->text().toUtf8(), &options);
@@ -44,26 +44,27 @@ void DatabaseCreator::selectFilePath() { ui->DatabaseNameLineEdit->setText(QFile
 
 void DatabaseCreator::setIterationSelector(const QString& selected)
 {
-    int min, max;
+    int min = 0, max = 0, init = 0;
 
     if (selected == "PBKDF2") {
         min = KEY_DERIVATION_PBKDF2_MIN_ITERATIONS;
         max = KEY_DERIVATION_PBKDF2_MAX_ITERATIONS;
+        init = KEY_DERIVATION_PBKDF2_INIT_ITERATIONS;
     }
     else if (selected == "Scrypt") {
         min = KEY_DERIVATION_SCRYPT_MIN_ITERATIONS;
         max = KEY_DERIVATION_SCRYPT_MAX_ITERATIONS;
+        init = KEY_DERIVATION_SCRYPT_INIT_ITERATIONS;
     }
     else if (selected == "Argon2id") {
-        // TO DO!
-    }
-    else {
-        min = 0;
-        max = 0;
+        min = KEY_DERIVATION_ARGON2_MIN_ITERATIONS;
+        max = KEY_DERIVATION_ARGON2_MAX_ITERATIONS;
+        init = KEY_DERIVATION_ARGON2_INIT_ITERATIONS;
     }
 
     ui->DatabaseKeyDerivationTransformRoundsSpinBox->setMinimum(min);
     ui->DatabaseKeyDerivationTransformRoundsSpinBox->setMaximum(max);
+    ui->DatabaseKeyDerivationTransformRoundsSpinBox->setValue(init);
 }
 
 void DatabaseCreator::setOkButtonEnabled()

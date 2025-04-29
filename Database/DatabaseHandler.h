@@ -7,12 +7,12 @@
 
 struct DatabaseHandlerOptions
 {
-    std::string Description;
-    std::string EncryptionAlgorithm;
+    QString Description;
+    QString EncryptionAlgorithm;
     uint16_t EncryptionKeyLength;
-    std::string KeyDerivationFunction;
+    QString KeyDerivationFunction;
     uint32_t KeyDerivationRounds;
-    std::string KeySalt;
+    QByteArray KeySalt;
 };
 
 class DatabaseHandler

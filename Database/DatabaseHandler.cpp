@@ -2,6 +2,7 @@
 #include "../Crypto/Crypto.h"
 #include "../Configs/Constants.h"
 #include "../Crypto/Crypto.h"
+#include <QByteArray>
 #include <stdexcept>
 #include <sqlite3.h>
 #include <QFile>
@@ -22,13 +23,12 @@ DatabaseHandler::DatabaseHandler(const QString& filePath, const QByteArray& pass
         this->fetchDatabaseBasicData();
 
     if (options->KeyDerivationFunction == "PBKDF2")
-        this->encryptionKey = Crypto::deriveKeyPbkdf2(password.data(), this->dbOptions.KeySalt, this->dbOptions.EncryptionKeyLength, this->dbOptions.KeyDerivationRounds);
+        this->encryptionKey = Crypto::deriveKeyPbkdf2(password, this->dbOptions.KeySalt, this->dbOptions.EncryptionKeyLength, this->dbOptions.KeyDerivationRounds);
     else if (options->KeyDerivationFunction == "Scrypt")
-        this->encryptionKey = Crypto::deriveKeyScrypt(password.data(), password.length(), this->dbOptions.KeySalt, this->dbOptions.EncryptionKeyLength, this->dbOptions.KeyDerivationRounds);
-    else if (options->KeyDerivationFunction == "Argon2id") {
-        // TO DO!
-    }
-    else { throw std::runtime_error("Key derivation function not supported"); }
+        this->encryptionKey = Crypto::deriveKeyScrypt(password, this->dbOptions.KeySalt, this->dbOptions.EncryptionKeyLength, this->dbOptions.KeyDerivationRounds);
+    else if (options->KeyDerivationFunction == "Argon2id")
+        this->encryptionKey = Crypto::deriveKeyArgon2id(password, this->dbOptions.KeySalt, this->dbOptions.EncryptionKeyLength, this->dbOptions.KeyDerivationRounds);
+    else throw std::runtime_error("Key derivation function not supported");
 }
 
 DatabaseHandler::~DatabaseHandler()
@@ -71,24 +71,27 @@ void DatabaseHandler::createBasicInfoStructure()
         throw std::runtime_error(sqlite3_errmsg(this->database));
 
     sqlite3_stmt* statement;
-    sql = "INSERT INTO basic_data (entry_name, value) VALUES (?,?),(?,?),(?,?),(?,?),(?,?);";
+    sql = "INSERT INTO basic_data (entry_name, value) VALUES (?,?),(?,?),(?,?),(?,?),(?,?),(?,?);";
     if (sqlite3_prepare_v2(this->database, sql.data(), -1, &statement, nullptr) != SQLITE_OK)
         throw std::runtime_error(sqlite3_errmsg(this->database));
 
     sqlite3_bind_text(statement, 1, DATABASE_BASIC_DATA_DESCRIPTION, -1, SQLITE_TRANSIENT);
-    sqlite3_bind_text(statement, 2, this->dbOptions.Description.data(), -1, SQLITE_TRANSIENT);
+    sqlite3_bind_text(statement, 2, this->dbOptions.Description.toUtf8().data(), -1, SQLITE_TRANSIENT);
 
     sqlite3_bind_text(statement, 3, DATABASE_BASIC_DATA_ENC_ALGORITHM, -1, SQLITE_TRANSIENT);
-    sqlite3_bind_text(statement, 4, this->dbOptions.EncryptionAlgorithm.data(), -1, SQLITE_TRANSIENT);
+    sqlite3_bind_text(statement, 4, this->dbOptions.EncryptionAlgorithm.toUtf8().data(), -1, SQLITE_TRANSIENT);
 
     sqlite3_bind_text(statement, 5, DATABASE_BASIC_DATA_ENC_KEY_LEN, -1, SQLITE_TRANSIENT);
     sqlite3_bind_int(statement, 6, this->dbOptions.EncryptionKeyLength);
 
     sqlite3_bind_text(statement, 7, DATABASE_BASIC_DATA_KEY_DERIVATION_FUNC, -1, SQLITE_TRANSIENT);
-    sqlite3_bind_text(statement, 8, this->dbOptions.KeyDerivationFunction.data(), -1, SQLITE_TRANSIENT);
+    sqlite3_bind_text(statement, 8, this->dbOptions.KeyDerivationFunction.toUtf8().data(), -1, SQLITE_TRANSIENT);
 
-    sqlite3_bind_text(statement, 9, DATABASE_BASIC_DATA_KEY_DERIVATION_SALT, -1, SQLITE_TRANSIENT);
-    sqlite3_bind_text(statement, 10, this->dbOptions.KeySalt.data(), -1, SQLITE_TRANSIENT);
+    sqlite3_bind_text(statement, 9, DATABASE_BASIC_DATA_KEY_DERIVATION_ROUNDS, -1, SQLITE_TRANSIENT);
+    sqlite3_bind_int(statement, 10, this->dbOptions.KeyDerivationRounds);
+
+    sqlite3_bind_text(statement, 11, DATABASE_BASIC_DATA_KEY_DERIVATION_SALT, -1, SQLITE_TRANSIENT);
+    sqlite3_bind_blob(statement, 12, this->dbOptions.KeySalt.data(), -1, SQLITE_TRANSIENT);
 
     if (sqlite3_step(statement) != SQLITE_DONE) throw std::runtime_error(sqlite3_errmsg(this->database));
     if (sqlite3_finalize(statement) != SQLITE_OK) throw std::runtime_error(sqlite3_errmsg(this->database));

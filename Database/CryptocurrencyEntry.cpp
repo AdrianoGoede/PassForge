@@ -6,21 +6,21 @@
 
 CryptocurrencyEntry::CryptocurrencyEntry() : DatabaseEntry() {}
 
-CryptocurrencyEntry::CryptocurrencyEntry(const QByteArray &header, const QByteArray &body) : DatabaseEntry(header, DATABASE_ENTRY_TYPE_CRYPTOCURRENCY)
+CryptocurrencyEntry::CryptocurrencyEntry(const QByteArray& header, const QByteArray& body) : DatabaseEntry(header, DATABASE_ENTRY_TYPE_CRYPTOCURRENCY)
 {
     QJsonObject obj = QJsonDocument::fromJson(body).object();
-    this->cryptocurrencyName = obj["cryptocurrencyName"].toString("");
-    this->seed = obj["seed"].toString("");
-    this->masterPrivateKey = obj["masterPrivateKey"].toString("");
-    this->notes = obj["notes"].toString("");
+    this->cryptocurrencyName = obj["cryptocurrencyName"].toString("").toUtf8();
+    this->seed = obj["seed"].toString("").toUtf8();
+    this->masterPrivateKey = obj["masterPrivateKey"].toString("").toUtf8();
+    this->notes = obj["notes"].toString("").toUtf8();
 }
 
 CryptocurrencyEntry::~CryptocurrencyEntry()
 {
-    Crypto::wipeMemory(this->cryptocurrencyName.data(), (sizeof(QChar) * this->cryptocurrencyName.length()));
-    Crypto::wipeMemory(this->seed.data(), (sizeof(QChar) * this->seed.length()));
-    Crypto::wipeMemory(this->masterPrivateKey.data(), (sizeof(QChar) * this->masterPrivateKey.length()));
-    Crypto::wipeMemory(this->notes.data(), (sizeof(QChar) * this->notes.length()));
+    Crypto::wipeMemory(this->cryptocurrencyName.data(), this->cryptocurrencyName.length());
+    Crypto::wipeMemory(this->seed.data(), this->seed.length());
+    Crypto::wipeMemory(this->masterPrivateKey.data(), this->masterPrivateKey.length());
+    Crypto::wipeMemory(this->notes.data(), this->notes.length());
 }
 
 QByteArray CryptocurrencyEntry::getBodyJson() const
@@ -30,25 +30,41 @@ QByteArray CryptocurrencyEntry::getBodyJson() const
     obj["entryType"] = this->entryType;
     obj["name"] = this->name;
     obj["path"] = this->path;
-    obj["cryptocurrencyName"] = this->cryptocurrencyName;
-    obj["seed"] = this->seed;
-    obj["masterPrivateKey"] = this->masterPrivateKey;
-    obj["notes"] = this->notes;
+    obj["cryptocurrencyName"] = this->cryptocurrencyName.data();
+    obj["seed"] = this->seed.data();
+    obj["masterPrivateKey"] = this->masterPrivateKey.data();
+    obj["notes"] = this->notes.data();
     return QJsonDocument(obj).toJson(QJsonDocument::JsonFormat::Compact);
 }
 
-QString CryptocurrencyEntry::getCryptocurrencyName() const { return cryptocurrencyName; }
+const QByteArray& CryptocurrencyEntry::getCryptocurrencyName() const { return cryptocurrencyName; }
 
-void CryptocurrencyEntry::setCryptocurrencyName(const QString &newCryptocurrencyName) { cryptocurrencyName = newCryptocurrencyName.trimmed(); }
+void CryptocurrencyEntry::setCryptocurrencyName(const QByteArray& newCryptocurrencyName)
+{
+    Crypto::wipeMemory(this->cryptocurrencyName.data(), this->cryptocurrencyName.length());
+    this->cryptocurrencyName = newCryptocurrencyName.trimmed();
+}
 
-QString CryptocurrencyEntry::getSeed() const { return seed; }
+const QByteArray& CryptocurrencyEntry::getSeed() const { return seed; }
 
-void CryptocurrencyEntry::setSeed(const QString &newSeed) { seed = newSeed.trimmed(); }
+void CryptocurrencyEntry::setSeed(const QByteArray& newSeed)
+{
+    Crypto::wipeMemory(this->seed.data(), this->seed.length());
+    this->seed = newSeed;
+}
 
-QString CryptocurrencyEntry::getMasterPrivateKey() const { return masterPrivateKey; }
+const QByteArray& CryptocurrencyEntry::getMasterPrivateKey() const { return masterPrivateKey; }
 
-void CryptocurrencyEntry::setMasterPrivateKey(const QString &newMasterPrivateKey) { masterPrivateKey = newMasterPrivateKey.trimmed(); }
+void CryptocurrencyEntry::setMasterPrivateKey(const QByteArray& newMasterPrivateKey)
+{
+    Crypto::wipeMemory(this->masterPrivateKey.data(), this->masterPrivateKey.length());
+    this->masterPrivateKey = newMasterPrivateKey;
+}
 
-QString CryptocurrencyEntry::getNotes() const { return notes; }
+const QByteArray& CryptocurrencyEntry::getNotes() const { return notes; }
 
-void CryptocurrencyEntry::setNotes(const QString &newNotes) { notes = newNotes.trimmed(); }
+void CryptocurrencyEntry::setNotes(const QByteArray& newNotes)
+{
+    Crypto::wipeMemory(this->notes.data(), this->notes.length());
+    this->notes = newNotes;
+}

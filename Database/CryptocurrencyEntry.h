@@ -3,7 +3,6 @@
 
 #include "DatabaseEntry.h"
 #include <QByteArray>
-#include <QString>
 
 class CryptocurrencyEntry : private DatabaseEntry
 {
@@ -14,20 +13,20 @@ public:
 
     QByteArray getBodyJson() const override;
 
-    QString getCryptocurrencyName() const;
-    void setCryptocurrencyName(const QString &newCryptocurrencyName);
+    const QByteArray& getCryptocurrencyName() const;
+    void setCryptocurrencyName(const QByteArray& newCryptocurrencyName);
 
-    QString getSeed() const;
-    void setSeed(const QString &newSeed);
+    const QByteArray& getSeed() const;
+    void setSeed(const QByteArray& newSeed);
 
-    QString getMasterPrivateKey() const;
-    void setMasterPrivateKey(const QString &newMasterPrivateKey);
+    const QByteArray& getMasterPrivateKey() const;
+    void setMasterPrivateKey(const QByteArray& newMasterPrivateKey);
 
-    QString getNotes() const;
-    void setNotes(const QString &newNotes);
+    const QByteArray& getNotes() const;
+    void setNotes(const QByteArray& newNotes);
 
 private:
-    QString cryptocurrencyName, seed, masterPrivateKey, notes;
+    QByteArray cryptocurrencyName, seed, masterPrivateKey, notes;
 };
 
 #endif // CRYPTOCURRENCYENTRY_H

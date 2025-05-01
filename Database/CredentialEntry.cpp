@@ -9,18 +9,18 @@ CredentialEntry::CredentialEntry() : DatabaseEntry() {}
 CredentialEntry::CredentialEntry(const QByteArray& header, const QByteArray& body) : DatabaseEntry(header, DATABASE_ENTRY_TYPE_CREDENTIAL)
 {
     QJsonObject obj = QJsonDocument::fromJson(body).object();
-    this->username = obj["username"].toString("");
-    this->password = obj["password"].toString("");
-    this->notes = obj["notes"].toString("");
-    this->url = obj["url"].toString("");
+    this->username = obj["username"].toString("").toUtf8();
+    this->password = obj["password"].toString("").toUtf8();
+    this->notes = obj["notes"].toString("").toUtf8();
+    this->url = obj["url"].toString("").toUtf8();
 }
 
 CredentialEntry::~CredentialEntry()
 {
-    Crypto::wipeMemory(this->username.data(), (sizeof(QChar) * this->username.size()));
-    Crypto::wipeMemory(this->password.data(), (sizeof(QChar) * this->password.size()));
-    Crypto::wipeMemory(this->notes.data(), (sizeof(QChar) * this->notes.size()));
-    Crypto::wipeMemory(this->url.data(), (sizeof(QChar) * this->url.size()));
+    Crypto::wipeMemory(this->username.data(), this->username.size());
+    Crypto::wipeMemory(this->password.data(), this->password.size());
+    Crypto::wipeMemory(this->notes.data(), this->notes.size());
+    Crypto::wipeMemory(this->url.data(), this->url.size());
 }
 
 QByteArray CredentialEntry::getBodyJson() const
@@ -30,25 +30,41 @@ QByteArray CredentialEntry::getBodyJson() const
     obj["entryType"] = this->entryType;
     obj["name"] = this->name;
     obj["path"] = this->path;
-    obj["username"] = this->username;
-    obj["password"] = this->password;
-    obj["notes"] = this->notes;
-    obj["url"] = this->url;
+    obj["username"] = this->username.data();
+    obj["password"] = this->password.data();
+    obj["notes"] = this->notes.data();
+    obj["url"] = this->url.data();
     return QJsonDocument(obj).toJson(QJsonDocument::JsonFormat::Compact);
 }
 
-QString CredentialEntry::getUsername() const { return username; }
+const QByteArray& CredentialEntry::getUsername() const { return username; }
 
-void CredentialEntry::setUsername(const QString &newUsername) { username = newUsername.trimmed(); }
+void CredentialEntry::setUsername(const QByteArray& newUsername)
+{
+    Crypto::wipeMemory(this->username.data(), this->username.length());
+    this->username = newUsername.trimmed();
+}
 
-QString CredentialEntry::getPassword() const { return password; }
+const QByteArray& CredentialEntry::getPassword() const { return password; }
 
-void CredentialEntry::setPassword(const QString &newPassword) { password = newPassword; }
+void CredentialEntry::setPassword(const QByteArray& newPassword)
+{
+    Crypto::wipeMemory(this->password.data(), this->password.length());
+    this->password = newPassword;
+}
 
-QString CredentialEntry::getNotes() const { return notes; }
+const QByteArray& CredentialEntry::getNotes() const { return notes; }
 
-void CredentialEntry::setNotes(const QString &newNotes) { notes = newNotes.trimmed(); }
+void CredentialEntry::setNotes(const QByteArray& newNotes)
+{
+    Crypto::wipeMemory(this->notes.data(), this->notes.length());
+    this->notes = newNotes;
+}
 
-QString CredentialEntry::getUrl() const { return url; }
+const QByteArray& CredentialEntry::getUrl() const { return url; }
 
-void CredentialEntry::setUrl(const QString &newUrl) { url = newUrl.trimmed(); }
+void CredentialEntry::setUrl(const QByteArray& newUrl)
+{
+    Crypto::wipeMemory(this->url.data(), this->url.length());
+    this->url = newUrl.trimmed();
+}

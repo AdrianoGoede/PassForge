@@ -20,5 +20,6 @@
 
 #define DATABASE_ENTRY_TYPE_CREDENTIAL            1
 #define DATABASE_ENTRY_TYPE_CRYPTOCURRENCY        2
+#define DATABASE_ENTRY_TYPE_API_KEY               3
 
 #endif // CONSTANTS_H

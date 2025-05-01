@@ -16,6 +16,7 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWi
     ui->CentralWidget->setLayout(ui->CentralGridLayout);
     ui->HeaderInfoTabCredential->setLayout(ui->CredentialHeaderInfoLayout);
     ui->HeaderInfoTabCryptocurrency->setLayout(ui->CryptocurrencyHeaderInfoLayout);
+    ui->HeaderInfoTabApiKey->setLayout(ui->ApiKeyHeaderInfoLayout);
     connect(ui->ActionDatabaseNew, &QAction::triggered, this, &MainWindow::CreateNewDatabase);
     connect(ui->ActionDatabaseOpen, &QAction::triggered, this, &MainWindow::OpenExistingDatabase);
     connect(ui->ActionDatabaseSettings, &QAction::triggered, this, &MainWindow::OpenDatabaseSettings);

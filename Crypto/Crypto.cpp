@@ -6,7 +6,6 @@
 #include <botan-2/botan/scrypt.h>
 #include <botan-2/botan/argon2.h>
 #include <botan-2/botan/hex.h>
-#include <botan-2/botan/system_rng.h>
 
 void Crypto::wipeMemory(void *address, size_t bytes) { Botan::secure_scrub_memory(address, bytes); }
 

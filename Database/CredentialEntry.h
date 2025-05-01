@@ -2,7 +2,7 @@
 #define CREDENTIALENTRY_H
 
 #include "DatabaseEntry.h"
-#include <QString>
+#include <QByteArray>
 
 class CredentialEntry : private DatabaseEntry
 {
@@ -13,20 +13,20 @@ public:
 
     QByteArray getBodyJson() const override;
 
-    QString getUsername() const;
-    void setUsername(const QString &newUsername);
+    const QByteArray& getUsername() const;
+    void setUsername(const QByteArray& newUsername);
 
-    QString getPassword() const;
-    void setPassword(const QString &newPassword);
+    const QByteArray& getPassword() const;
+    void setPassword(const QByteArray& newPassword);
 
-    QString getNotes() const;
-    void setNotes(const QString &newNotes);
+    const QByteArray& getNotes() const;
+    void setNotes(const QByteArray& newNotes);
 
-    QString getUrl() const;
-    void setUrl(const QString &newUrl);
+    const QByteArray& getUrl() const;
+    void setUrl(const QByteArray& newUrl);
 
 private:
-    QString username, password, notes, url;
+    QByteArray username, password, notes, url;
 };
 
 #endif // CREDENTIALENTRY_H

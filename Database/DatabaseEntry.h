@@ -1,7 +1,7 @@
 #ifndef DATABASEENTRY_H
 #define DATABASEENTRY_H
 
-#include <QString>
+#include <QByteArray>
 
 class DatabaseEntry
 {
@@ -16,15 +16,15 @@ public:
     int getSequence() const;
     void setSequence(int newSequence);
 
-    QString getPath() const;
-    void setPath(const QString &newPath);
+    const QByteArray& getPath() const;
+    void setPath(const QByteArray& newPath);
 
-    QString getName() const;
-    void setName(const QString &newName);
+    const QByteArray& getName() const;
+    void setName(const QByteArray& newName);
 
 protected:
     int sequence, entryType;
-    QString name, path;
+    QByteArray name, path;
 };
 
 #endif // DATABASEENTRY_H

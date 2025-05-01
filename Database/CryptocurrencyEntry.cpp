@@ -26,10 +26,6 @@ CryptocurrencyEntry::~CryptocurrencyEntry()
 QByteArray CryptocurrencyEntry::getBodyJson() const
 {
     QJsonObject obj;
-    obj["sequence"] = this->sequence;
-    obj["entryType"] = this->entryType;
-    obj["name"] = this->name;
-    obj["path"] = this->path;
     obj["cryptocurrencyName"] = this->cryptocurrencyName.data();
     obj["seed"] = this->seed.data();
     obj["masterPrivateKey"] = this->masterPrivateKey.data();
@@ -37,7 +33,7 @@ QByteArray CryptocurrencyEntry::getBodyJson() const
     return QJsonDocument(obj).toJson(QJsonDocument::JsonFormat::Compact);
 }
 
-const QByteArray& CryptocurrencyEntry::getCryptocurrencyName() const { return cryptocurrencyName; }
+const QByteArray& CryptocurrencyEntry::getCryptocurrencyName() const { return this->cryptocurrencyName; }
 
 void CryptocurrencyEntry::setCryptocurrencyName(const QByteArray& newCryptocurrencyName)
 {
@@ -45,7 +41,7 @@ void CryptocurrencyEntry::setCryptocurrencyName(const QByteArray& newCryptocurre
     this->cryptocurrencyName = newCryptocurrencyName.trimmed();
 }
 
-const QByteArray& CryptocurrencyEntry::getSeed() const { return seed; }
+const QByteArray& CryptocurrencyEntry::getSeed() const { return this->seed; }
 
 void CryptocurrencyEntry::setSeed(const QByteArray& newSeed)
 {
@@ -53,7 +49,7 @@ void CryptocurrencyEntry::setSeed(const QByteArray& newSeed)
     this->seed = newSeed;
 }
 
-const QByteArray& CryptocurrencyEntry::getMasterPrivateKey() const { return masterPrivateKey; }
+const QByteArray& CryptocurrencyEntry::getMasterPrivateKey() const { return this->masterPrivateKey; }
 
 void CryptocurrencyEntry::setMasterPrivateKey(const QByteArray& newMasterPrivateKey)
 {
@@ -61,7 +57,7 @@ void CryptocurrencyEntry::setMasterPrivateKey(const QByteArray& newMasterPrivate
     this->masterPrivateKey = newMasterPrivateKey;
 }
 
-const QByteArray& CryptocurrencyEntry::getNotes() const { return notes; }
+const QByteArray& CryptocurrencyEntry::getNotes() const { return this->notes; }
 
 void CryptocurrencyEntry::setNotes(const QByteArray& newNotes)
 {

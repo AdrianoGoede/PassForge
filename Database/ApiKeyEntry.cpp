@@ -4,7 +4,6 @@
 #include <QJsonDocument>
 #include <QJsonObject>
 
-
 ApiKeyEntry::ApiKeyEntry() {}
 
 ApiKeyEntry::ApiKeyEntry(const QByteArray &header, const QByteArray &body) : DatabaseEntry(header, DATABASE_ENTRY_TYPE_API_KEY)
@@ -31,7 +30,7 @@ QByteArray ApiKeyEntry::getBodyJson() const
     return QJsonDocument(obj).toJson(QJsonDocument::JsonFormat::Compact);
 }
 
-const QByteArray& ApiKeyEntry::getUrl() const { return url; }
+const QByteArray& ApiKeyEntry::getUrl() const { return this->url; }
 
 void ApiKeyEntry::setUrl(const QByteArray &newUrl)
 {
@@ -39,7 +38,7 @@ void ApiKeyEntry::setUrl(const QByteArray &newUrl)
     this->url = newUrl;
 }
 
-const QByteArray& ApiKeyEntry::getKey() const { return key; }
+const QByteArray& ApiKeyEntry::getKey() const { return this->key; }
 
 void ApiKeyEntry::setKey(const QByteArray &newKey)
 {
@@ -47,7 +46,7 @@ void ApiKeyEntry::setKey(const QByteArray &newKey)
     this->key = newKey;
 }
 
-const QByteArray& ApiKeyEntry::getNotes() const { return notes; }
+const QByteArray& ApiKeyEntry::getNotes() const { return this->notes; }
 
 void ApiKeyEntry::setNotes(const QByteArray &newNotes)
 {

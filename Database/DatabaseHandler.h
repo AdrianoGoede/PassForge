@@ -4,6 +4,7 @@
 #include "DatabaseEntry.h"
 #include <QByteArray>
 #include <sqlite3.h>
+#include <QString>
 
 struct DatabaseHandlerOptions
 {

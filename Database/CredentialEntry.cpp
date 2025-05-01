@@ -26,10 +26,6 @@ CredentialEntry::~CredentialEntry()
 QByteArray CredentialEntry::getBodyJson() const
 {
     QJsonObject obj;
-    obj["sequence"] = this->sequence;
-    obj["entryType"] = this->entryType;
-    obj["name"] = this->name;
-    obj["path"] = this->path;
     obj["username"] = this->username.data();
     obj["password"] = this->password.data();
     obj["notes"] = this->notes.data();
@@ -37,7 +33,7 @@ QByteArray CredentialEntry::getBodyJson() const
     return QJsonDocument(obj).toJson(QJsonDocument::JsonFormat::Compact);
 }
 
-const QByteArray& CredentialEntry::getUsername() const { return username; }
+const QByteArray& CredentialEntry::getUsername() const { return this->username; }
 
 void CredentialEntry::setUsername(const QByteArray& newUsername)
 {
@@ -45,7 +41,7 @@ void CredentialEntry::setUsername(const QByteArray& newUsername)
     this->username = newUsername.trimmed();
 }
 
-const QByteArray& CredentialEntry::getPassword() const { return password; }
+const QByteArray& CredentialEntry::getPassword() const { return this->password; }
 
 void CredentialEntry::setPassword(const QByteArray& newPassword)
 {
@@ -53,7 +49,7 @@ void CredentialEntry::setPassword(const QByteArray& newPassword)
     this->password = newPassword;
 }
 
-const QByteArray& CredentialEntry::getNotes() const { return notes; }
+const QByteArray& CredentialEntry::getNotes() const { return this->notes; }
 
 void CredentialEntry::setNotes(const QByteArray& newNotes)
 {
@@ -61,7 +57,7 @@ void CredentialEntry::setNotes(const QByteArray& newNotes)
     this->notes = newNotes;
 }
 
-const QByteArray& CredentialEntry::getUrl() const { return url; }
+const QByteArray& CredentialEntry::getUrl() const { return this->url; }
 
 void CredentialEntry::setUrl(const QByteArray& newUrl)
 {

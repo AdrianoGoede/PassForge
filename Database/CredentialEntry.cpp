@@ -1,12 +1,11 @@
 #include "CredentialEntry.h"
-#include "../Configs/Constants.h"
 #include "../Crypto/Crypto.h"
 #include <QJsonDocument>
 #include <QJsonObject>
 
 CredentialEntry::CredentialEntry() : DatabaseEntry() {}
 
-CredentialEntry::CredentialEntry(const QByteArray& header, const QByteArray& body) : DatabaseEntry(header, DATABASE_ENTRY_TYPE_CREDENTIAL)
+CredentialEntry::CredentialEntry(const QByteArray& header, const QByteArray& body) : DatabaseEntry(header)
 {
     QJsonObject obj = QJsonDocument::fromJson(body).object();
     this->username = obj["username"].toString("").toUtf8();

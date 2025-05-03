@@ -6,6 +6,8 @@
 #include <botan-2/botan/scrypt.h>
 #include <botan-2/botan/argon2.h>
 #include <botan-2/botan/hex.h>
+#include <QString>
+#include <QStringList>
 
 void Crypto::wipeMemory(void *address, size_t bytes) { Botan::secure_scrub_memory(address, bytes); }
 
@@ -73,18 +75,96 @@ QByteArray Crypto::deriveKeyArgon2id(const QByteArray& password, const QByteArra
     return QByteArray(reinterpret_cast<const char*>(buffer.data()), static_cast<int>(buffer.size()));
 }
 
-QByteArray Crypto::encryptString(const QByteArray& plaintext, const QByteArray& key, const QString& algorithm)
+QByteArray Crypto::encrypt(const QByteArray& plaintext, const QByteArray& key, const QString& cipherSetting)
 {
-    std::unique_ptr<Botan::Cipher_Mode> cipher = Botan::Cipher_Mode::create("AES-256/GCM", Botan::ENCRYPTION); // TO DO!
-    if (!cipher) throw std::runtime_error("Encryption algorithm not supported");
+    if (QStringList({ CIPHER_SETTINGS_CHACHA20 }).contains(cipherSetting))
+        return encryptWithStreamCipher(plaintext, key, cipherSetting);
+    return encryptWithBlockCipher(plaintext, key, cipherSetting);
+}
+
+QByteArray Crypto::decrypt(const QByteArray &ciphertext, const QByteArray &key, const QString &cipherSetting)
+{
+    if (QStringList({ CIPHER_SETTINGS_CHACHA20 }).contains(cipherSetting))
+        return decryptWithStreamCipher(ciphertext, key, cipherSetting);
+    return decryptWithBlockCipher(ciphertext, key, cipherSetting);
+}
+
+QByteArray Crypto::encryptWithBlockCipher(const QByteArray& plaintext, const QByteArray& key, const QString& cipherSetting)
+{
+    uint16_t keyLength = (key.length() * 8);
+    if (!QStringList({SUPPORTED_BLOCK_CYPHER_KEY_SETTINGS}).contains(QString::number(keyLength)))
+        throw std::runtime_error(std::to_string(keyLength) + " bits key setting not supported");
+    std::unique_ptr<Botan::Cipher_Mode> cipher = Botan::Cipher_Mode::create(cipherSetting.toStdString(), Botan::ENCRYPTION);
+    if (!cipher) throw std::runtime_error("Algorithm not supported");
+    cipher->set_key(Botan::secure_vector<uint8_t>(key.cbegin(), key.cend()));
 
     Botan::AutoSeeded_RNG rng;
     Botan::secure_vector<uint8_t> buffer(plaintext.cbegin(), plaintext.cend());
-    Botan::secure_vector<uint8_t> initializationVector = rng.random_vec(CIPHERTEXT_IV_LENGTH_BYTES);
+    Botan::secure_vector<uint8_t> initializationVector = rng.random_vec(cipher->default_nonce_length());
 
+    try {
+        cipher->start(initializationVector);
+        cipher->finish(buffer);
+        return QByteArray(reinterpret_cast<char*>(initializationVector.data()), static_cast<int>(initializationVector.size()))
+            .append(QByteArray(reinterpret_cast<char*>(buffer.data()), static_cast<int>(buffer.size())));
+    }
+    catch (const std::exception& ex) { throw std::runtime_error("Encryption failed - " + std::string(ex.what())); }
+}
+
+QByteArray Crypto::decryptWithBlockCipher(const QByteArray& ciphertext, const QByteArray& key, const QString& cipherSetting)
+{
+    uint16_t keyLength = (key.length() * 8);
+    if (!QStringList({SUPPORTED_BLOCK_CYPHER_KEY_SETTINGS}).contains(QString::number(keyLength)))
+        throw std::runtime_error(std::to_string(keyLength) + " bits key setting not supported");
+    std::unique_ptr<Botan::Cipher_Mode> cipher = Botan::Cipher_Mode::create(cipherSetting.toStdString(), Botan::DECRYPTION);
+    if (!cipher) throw std::runtime_error("Algorithm not supported");
     cipher->set_key(Botan::secure_vector<uint8_t>(key.cbegin(), key.cend()));
-    cipher->start(initializationVector);
-    cipher->finish(buffer);
 
-    return (Botan::hex_encode(initializationVector) + Botan::hex_encode(buffer)).data();
+    Botan::secure_vector<uint8_t> buffer((ciphertext.cbegin() + cipher->default_nonce_length()), ciphertext.cend());
+    Botan::secure_vector<uint8_t> initializationVector(ciphertext.cbegin(), (ciphertext.cbegin() + cipher->default_nonce_length()));
+
+    try {
+        cipher->start(initializationVector);
+        cipher->finish(buffer);
+        return QByteArray(reinterpret_cast<char*>(buffer.data()), static_cast<int>(buffer.size()));
+    }
+    catch (const std::exception& ex) { throw std::runtime_error("Decryption failed - " + std::string(ex.what())); }
+}
+
+QByteArray Crypto::encryptWithStreamCipher(const QByteArray& plaintext, const QByteArray& key, const QString& cipherSetting)
+{
+    if (key.length() != 32) throw std::runtime_error("Key must be 256 bits long");
+    std::unique_ptr<Botan::StreamCipher> cipher = Botan::StreamCipher::create(cipherSetting.toStdString());
+    if (!cipher) throw std::runtime_error("Algorithm not supported");
+    cipher->set_key(Botan::secure_vector<uint8_t>(key.cbegin(), key.cend()));
+
+    Botan::AutoSeeded_RNG rng;
+    Botan::secure_vector<uint8_t> buffer(plaintext.cbegin(), plaintext.cend());
+    Botan::secure_vector<uint8_t> initializationVector = rng.random_vec(cipher->default_iv_length());
+
+    try {
+        cipher->set_iv(initializationVector.data(), initializationVector.size());
+        cipher->encrypt(buffer);
+        return QByteArray(reinterpret_cast<char*>(initializationVector.data()), static_cast<int>(initializationVector.size()))
+            .append(QByteArray(reinterpret_cast<char*>(buffer.data()), static_cast<int>(buffer.size())));
+    }
+    catch (const std::exception& ex) { throw std::runtime_error("Encryption failed - " + std::string(ex.what())); }
+}
+
+QByteArray Crypto::decryptWithStreamCipher(const QByteArray& ciphertext, const QByteArray& key, const QString& cipherSetting)
+{
+    if (key.length() != 32) throw std::runtime_error("Key must be 256 bits long");
+    std::unique_ptr<Botan::StreamCipher> cipher = Botan::StreamCipher::create(cipherSetting.toStdString());
+    if (!cipher) throw std::runtime_error("Algorithm not supported");
+    cipher->set_key(Botan::secure_vector<uint8_t>(key.cbegin(), key.cend()));
+
+    Botan::secure_vector<uint8_t> buffer((ciphertext.cbegin() + cipher->default_iv_length()), ciphertext.cend());
+    Botan::secure_vector<uint8_t> initializationVector(ciphertext.cbegin(), (ciphertext.cbegin() + cipher->default_iv_length()));
+
+    try {
+        cipher->set_iv(initializationVector.data(), initializationVector.size());
+        cipher->encrypt(buffer);
+        return QByteArray(reinterpret_cast<char*>(buffer.data()), static_cast<int>(buffer.size()));
+    }
+    catch (const std::exception& ex) { throw std::runtime_error("Decryption failed - " + std::string(ex.what())); }
 }

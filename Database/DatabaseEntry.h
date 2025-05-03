@@ -7,7 +7,7 @@ class DatabaseEntry
 {
 public:
     DatabaseEntry();
-    DatabaseEntry(const QByteArray &header, const int entryType);
+    DatabaseEntry(const QByteArray &header, int entryId = 0);
     ~DatabaseEntry();
 
     QByteArray getHeaderJson() const;
@@ -23,7 +23,7 @@ public:
     void setName(const QByteArray& newName);
 
 protected:
-    int sequence, entryType;
+    int entryId, sequence, entryType;
     QByteArray name, path;
 };
 

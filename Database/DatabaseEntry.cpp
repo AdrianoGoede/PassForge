@@ -5,9 +5,10 @@
 
 DatabaseEntry::DatabaseEntry() {}
 
-DatabaseEntry::DatabaseEntry(const QByteArray &header, const int entryType)
+DatabaseEntry::DatabaseEntry(const QByteArray &header, int entryId)
 {
     QJsonObject obj = QJsonDocument::fromJson(header).object();
+    this->entryId = entryId;
     this->sequence = obj["sequence"].toInt(0);
     this->entryType = obj["entryType"].toInt(0);
     this->name = obj["name"].toString("").toUtf8();

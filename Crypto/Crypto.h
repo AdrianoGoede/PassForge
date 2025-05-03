@@ -14,7 +14,14 @@ public:
     static QByteArray deriveKeyPbkdf2(const QByteArray& password, const QByteArray& salt, size_t keyLength, size_t iterations);
     static QByteArray deriveKeyScrypt(const QByteArray& password, const QByteArray& salt, size_t keyLength, size_t iterations);
     static QByteArray deriveKeyArgon2id(const QByteArray& password, const QByteArray& salt, size_t keyLength, size_t iterations);
-    static QByteArray encryptString(const QByteArray& plaintext, const QByteArray& key, const QString& algorithm);
+    static QByteArray encrypt(const QByteArray& plaintext, const QByteArray& key, const QString& cipherSetting);
+    static QByteArray decrypt(const QByteArray& ciphertext, const QByteArray& key, const QString& cipherSetting);
+
+private:
+    static QByteArray encryptWithBlockCipher(const QByteArray& plaintext, const QByteArray& key, const QString& cipherSetting);
+    static QByteArray decryptWithBlockCipher(const QByteArray& ciphertext, const QByteArray& key, const QString& cipherSetting);
+    static QByteArray encryptWithStreamCipher(const QByteArray& plaintext, const QByteArray& key, const QString& cipherSetting);
+    static QByteArray decryptWithStreamCipher(const QByteArray& ciphertext, const QByteArray& key, const QString& cipherSetting);
 };
 
 #endif // CRYPTO_H

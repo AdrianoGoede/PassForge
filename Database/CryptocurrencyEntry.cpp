@@ -1,12 +1,11 @@
 #include "CryptocurrencyEntry.h"
-#include "../Configs/Constants.h"
 #include "../Crypto/Crypto.h"
 #include <QJsonDocument>
 #include <QJsonObject>
 
 CryptocurrencyEntry::CryptocurrencyEntry() : DatabaseEntry() {}
 
-CryptocurrencyEntry::CryptocurrencyEntry(const QByteArray& header, const QByteArray& body) : DatabaseEntry(header, DATABASE_ENTRY_TYPE_CRYPTOCURRENCY)
+CryptocurrencyEntry::CryptocurrencyEntry(const QByteArray& header, const QByteArray& body) : DatabaseEntry(header)
 {
     QJsonObject obj = QJsonDocument::fromJson(body).object();
     this->cryptocurrencyName = obj["cryptocurrencyName"].toString("").toUtf8();

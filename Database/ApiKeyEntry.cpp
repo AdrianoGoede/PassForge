@@ -1,12 +1,11 @@
 #include "ApiKeyEntry.h"
-#include "../Configs/Constants.h"
 #include "../Crypto/Crypto.h"
 #include <QJsonDocument>
 #include <QJsonObject>
 
 ApiKeyEntry::ApiKeyEntry() {}
 
-ApiKeyEntry::ApiKeyEntry(const QByteArray &header, const QByteArray &body) : DatabaseEntry(header, DATABASE_ENTRY_TYPE_API_KEY)
+ApiKeyEntry::ApiKeyEntry(const QByteArray &header, const QByteArray &body) : DatabaseEntry(header)
 {
     QJsonObject obj = QJsonDocument::fromJson(body).object();
     this->url = obj["url"].toString("").toUtf8();

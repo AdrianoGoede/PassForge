@@ -18,6 +18,9 @@
 #define DATABASE_BASIC_DATA_KEY_DERIVATION_ROUNDS "KeyDerivationRounds"
 #define DATABASE_BASIC_DATA_KEY_DERIVATION_SALT   "KeyDerivationSalt"
 
+#define DATABASE_SETTINGS_DATA_GENERAL            "GeneralSection"
+#define DATABASE_SETTINGS_DATA_SECURITY           "SecuritySection"
+
 #define DATABASE_ENTRY_TYPE_CREDENTIAL            1
 #define DATABASE_ENTRY_TYPE_CRYPTOCURRENCY        2
 #define DATABASE_ENTRY_TYPE_API_KEY               3

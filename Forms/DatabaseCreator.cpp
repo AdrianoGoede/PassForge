@@ -30,14 +30,14 @@ DatabaseHandler* DatabaseCreator::getDatabaseHandler()
 {
     this->validateCurrentState();
 
-    DatabaseHandlerOptions options {
+    DatabaseHandlerBasicData basicData {
         ui->DatabaseDescriptionLineEdit->text().trimmed(),
         ui->DatabaseEncryptionAlgorithmComboBox->currentText().trimmed(),
         (uint16_t)ui->DatabaseEncryptionKeyLengthComboBox->currentText().trimmed().toInt(),
         ui->DatabaseKeyDerivationFunctionComboBox->currentText().trimmed(),
         (uint32_t)ui->DatabaseKeyDerivationTransformRoundsSpinBox->value()
     };
-    return new DatabaseHandler(ui->DatabaseNameLineEdit->text(), ui->DatabasePasswordLineEdit->text().toUtf8(), &options);
+    return new DatabaseHandler(ui->DatabaseNameLineEdit->text(), ui->DatabasePasswordLineEdit->text().toUtf8(), &basicData);
 }
 
 void DatabaseCreator::selectFilePath() { ui->DatabaseNameLineEdit->setText(QFileDialog::getSaveFileName(this, "Select location", QString(), DATABASE_FILE_FILTER)); }

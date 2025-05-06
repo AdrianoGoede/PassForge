@@ -4,11 +4,12 @@
 #include "DatabaseEntry.h"
 #include <QByteArray>
 
-class CryptocurrencyEntry : private DatabaseEntry
+class CryptocurrencyEntry : public DatabaseEntry
 {
 public:
     CryptocurrencyEntry();
     CryptocurrencyEntry(const QByteArray& header, const QByteArray& body);
+    CryptocurrencyEntry(const DatabaseEntry& header, const QByteArray& body);
     ~CryptocurrencyEntry();
 
     QByteArray getBodyJson() const override;
@@ -27,6 +28,7 @@ public:
 
 private:
     QByteArray cryptocurrencyName, seed, masterPrivateKey, notes;
+    void deserializeJson(const QByteArray& body);
 };
 
 #endif // CRYPTOCURRENCYENTRY_H

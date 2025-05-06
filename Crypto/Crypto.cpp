@@ -21,6 +21,13 @@ void Crypto::getRandomUnsignedIntegers(uint32_t *buffer, size_t count, uint32_t 
     }
 }
 
+QByteArray Crypto::generateRandomKey(size_t keyLength)
+{
+    Botan::AutoSeeded_RNG rng;
+    Botan::secure_vector<uint8_t> key = rng.random_vec(keyLength);
+    return QByteArray(reinterpret_cast<const char*>(key.data()), static_cast<int>(key.size()));
+}
+
 QByteArray Crypto::getHash(const std::string& plainText, const std::string& algorithm)
 {
     std::unique_ptr<Botan::HashFunction> hashFunction = Botan::HashFunction::create(algorithm);

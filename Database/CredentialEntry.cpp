@@ -5,14 +5,9 @@
 
 CredentialEntry::CredentialEntry() : DatabaseEntry() {}
 
-CredentialEntry::CredentialEntry(const QByteArray& header, const QByteArray& body) : DatabaseEntry(header)
-{
-    QJsonObject obj = QJsonDocument::fromJson(body).object();
-    this->username = obj["username"].toString("").toUtf8();
-    this->password = obj["password"].toString("").toUtf8();
-    this->notes = obj["notes"].toString("").toUtf8();
-    this->url = obj["url"].toString("").toUtf8();
-}
+CredentialEntry::CredentialEntry(const QByteArray& header, const QByteArray& body) : DatabaseEntry(header) { this->deserializeJson(body); }
+
+CredentialEntry::CredentialEntry(const DatabaseEntry &header, const QByteArray &body) : DatabaseEntry(header) { this->deserializeJson(body); }
 
 CredentialEntry::~CredentialEntry()
 {
@@ -62,4 +57,13 @@ void CredentialEntry::setUrl(const QByteArray& newUrl)
 {
     Crypto::wipeMemory(this->url.data(), this->url.length());
     this->url = newUrl.trimmed();
+}
+
+void CredentialEntry::deserializeJson(const QByteArray &body)
+{
+    QJsonObject obj = QJsonDocument::fromJson(body).object();
+    this->username = obj["username"].toString("").toUtf8();
+    this->password = obj["password"].toString("").toUtf8();
+    this->notes = obj["notes"].toString("").toUtf8();
+    this->url = obj["url"].toString("").toUtf8();
 }

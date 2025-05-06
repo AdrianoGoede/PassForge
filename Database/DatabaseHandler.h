@@ -25,17 +25,17 @@ class DatabaseHandler
 public:
     DatabaseHandler(const QString& filePath, const QByteArray& password, const DatabaseHandlerBasicData* basicData = nullptr);
     ~DatabaseHandler();
-    void createNewEntry(const DatabaseEntry& entry);
+    void saveDatabaseEntry(const DatabaseEntry& entry);
     QVector<DatabaseEntry> getEntryHeaders() const;
-    CredentialEntry getCredentialEntryBody(int entryId) const;
-    CryptocurrencyEntry getCryptocurrencyEntryBody(int entryId) const;
-    ApiKeyEntry getApiKeyEntryBody(int entryId) const;
+    CredentialEntry getCredentialEntry(const DatabaseEntry& entry) const;
+    CryptocurrencyEntry getCryptocurrencyEntry(const DatabaseEntry& entry) const;
+    ApiKeyEntry getApiKeyEntry(const DatabaseEntry& entry) const;
 
 private:
     sqlite3* database = nullptr;
     DatabaseHandlerBasicData dbBasicData;
     DatabaseHandlerSettings dbSettings;
-    QByteArray encryptionKey;
+    QByteArray masterEncryptionKey;
 
     void setNewDatabaseStructure();
     void createBasicInfoStructure();

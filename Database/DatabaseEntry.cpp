@@ -33,6 +33,10 @@ QByteArray DatabaseEntry::getHeaderJson() const
 
 QByteArray DatabaseEntry::getBodyJson() const { return QByteArray(); }
 
+int DatabaseEntry::getEntryId() const { return this->entryId; }
+
+void DatabaseEntry::setEntryId(int newEntryId) { this->entryId = newEntryId; }
+
 int DatabaseEntry::getSequence() const { return this->sequence; }
 
 void DatabaseEntry::setSequence(int newSequence) { this->sequence = newSequence; }

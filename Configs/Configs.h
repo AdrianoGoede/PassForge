@@ -28,10 +28,10 @@
 #define KEY_DERIVATION_ARGON2_PARALLELISM     2
 #define KEY_DERIVATION_ARGON2_MEMORY          262144
 
-#define CIPHER_SETTINGS_AES                   "AES-%1/CBC/PKCS7"
-#define CIPHER_SETTINGS_SERPENT               "Serpent/CBC/PKCS7"
-#define CIPHER_SETTINGS_TWOFISH               "Twofish/CBC/PKCS7"
-#define CIPHER_SETTINGS_CAMELLIA              "Camellia/CBC/PKCS7"
+#define CIPHER_SETTINGS_AES                   "AES-%1/EAX"
+#define CIPHER_SETTINGS_SERPENT               "Serpent-%1/EAX"
+#define CIPHER_SETTINGS_TWOFISH               "Twofish-%1/EAX"
+#define CIPHER_SETTINGS_CAMELLIA              "Camellia-%1/EAX"
 #define CIPHER_SETTINGS_CHACHA20              "ChaCha20"
 
 #endif // CONFIGS_H

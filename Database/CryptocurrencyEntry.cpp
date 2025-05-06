@@ -5,14 +5,9 @@
 
 CryptocurrencyEntry::CryptocurrencyEntry() : DatabaseEntry() {}
 
-CryptocurrencyEntry::CryptocurrencyEntry(const QByteArray& header, const QByteArray& body) : DatabaseEntry(header)
-{
-    QJsonObject obj = QJsonDocument::fromJson(body).object();
-    this->cryptocurrencyName = obj["cryptocurrencyName"].toString("").toUtf8();
-    this->seed = obj["seed"].toString("").toUtf8();
-    this->masterPrivateKey = obj["masterPrivateKey"].toString("").toUtf8();
-    this->notes = obj["notes"].toString("").toUtf8();
-}
+CryptocurrencyEntry::CryptocurrencyEntry(const QByteArray& header, const QByteArray& body) : DatabaseEntry(header) { this->deserializeJson(body); }
+
+CryptocurrencyEntry::CryptocurrencyEntry(const DatabaseEntry &header, const QByteArray &body) : DatabaseEntry(header) { this->deserializeJson(body); }
 
 CryptocurrencyEntry::~CryptocurrencyEntry()
 {
@@ -62,4 +57,13 @@ void CryptocurrencyEntry::setNotes(const QByteArray& newNotes)
 {
     Crypto::wipeMemory(this->notes.data(), this->notes.length());
     this->notes = newNotes;
+}
+
+void CryptocurrencyEntry::deserializeJson(const QByteArray &body)
+{
+    QJsonObject obj = QJsonDocument::fromJson(body).object();
+    this->cryptocurrencyName = obj["cryptocurrencyName"].toString("").toUtf8();
+    this->seed = obj["seed"].toString("").toUtf8();
+    this->masterPrivateKey = obj["masterPrivateKey"].toString("").toUtf8();
+    this->notes = obj["notes"].toString("").toUtf8();
 }

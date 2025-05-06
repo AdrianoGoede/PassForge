@@ -4,11 +4,12 @@
 #include "DatabaseEntry.h"
 #include <QByteArray>
 
-class CredentialEntry : private DatabaseEntry
+class CredentialEntry : public DatabaseEntry
 {
 public:
     CredentialEntry();
     CredentialEntry(const QByteArray& header, const QByteArray& body);
+    CredentialEntry(const DatabaseEntry& header, const QByteArray& body);
     ~CredentialEntry();
 
     QByteArray getBodyJson() const override;
@@ -27,6 +28,7 @@ public:
 
 private:
     QByteArray username, password, notes, url;
+    void deserializeJson(const QByteArray& body);
 };
 
 #endif // CREDENTIALENTRY_H

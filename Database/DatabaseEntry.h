@@ -13,6 +13,9 @@ public:
     QByteArray getHeaderJson() const;
     virtual QByteArray getBodyJson() const;
 
+    int getEntryId() const;
+    void setEntryId(int newEntryId);
+
     int getSequence() const;
     void setSequence(int newSequence);
 

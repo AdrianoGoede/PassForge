@@ -5,13 +5,9 @@
 
 ApiKeyEntry::ApiKeyEntry() {}
 
-ApiKeyEntry::ApiKeyEntry(const QByteArray &header, const QByteArray &body) : DatabaseEntry(header)
-{
-    QJsonObject obj = QJsonDocument::fromJson(body).object();
-    this->url = obj["url"].toString("").toUtf8();
-    this->key = obj["key"].toString("").toUtf8();
-    this->notes = obj["notes"].toString("").toUtf8();
-}
+ApiKeyEntry::ApiKeyEntry(const QByteArray& header, const QByteArray& body) : DatabaseEntry(header) { this->deserializeJson(body); }
+
+ApiKeyEntry::ApiKeyEntry(const DatabaseEntry& header, const QByteArray& body) : DatabaseEntry(header) { this->deserializeJson(body); }
 
 ApiKeyEntry::~ApiKeyEntry()
 {
@@ -31,7 +27,7 @@ QByteArray ApiKeyEntry::getBodyJson() const
 
 const QByteArray& ApiKeyEntry::getUrl() const { return this->url; }
 
-void ApiKeyEntry::setUrl(const QByteArray &newUrl)
+void ApiKeyEntry::setUrl(const QByteArray& newUrl)
 {
     Crypto::wipeMemory(this->url.data(), this->url.length());
     this->url = newUrl;
@@ -39,7 +35,7 @@ void ApiKeyEntry::setUrl(const QByteArray &newUrl)
 
 const QByteArray& ApiKeyEntry::getKey() const { return this->key; }
 
-void ApiKeyEntry::setKey(const QByteArray &newKey)
+void ApiKeyEntry::setKey(const QByteArray& newKey)
 {
     Crypto::wipeMemory(this->key.data(), this->key.length());
     this->key = newKey;
@@ -47,8 +43,16 @@ void ApiKeyEntry::setKey(const QByteArray &newKey)
 
 const QByteArray& ApiKeyEntry::getNotes() const { return this->notes; }
 
-void ApiKeyEntry::setNotes(const QByteArray &newNotes)
+void ApiKeyEntry::setNotes(const QByteArray& newNotes)
 {
     Crypto::wipeMemory(this->notes.data(), this->notes.length());
     this->notes = newNotes;
+}
+
+void ApiKeyEntry::deserializeJson(const QByteArray& body)
+{
+    QJsonObject obj = QJsonDocument::fromJson(body).object();
+    this->url = obj["url"].toString("").toUtf8();
+    this->key = obj["key"].toString("").toUtf8();
+    this->notes = obj["notes"].toString("").toUtf8();
 }

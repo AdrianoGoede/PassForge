@@ -4,11 +4,12 @@
 #include "DatabaseEntry.h"
 #include <QByteArray>
 
-class ApiKeyEntry : private DatabaseEntry
+class ApiKeyEntry : public DatabaseEntry
 {
 public:
     ApiKeyEntry();
     ApiKeyEntry(const QByteArray& header, const QByteArray& body);
+    ApiKeyEntry(const DatabaseEntry& header, const QByteArray& body);
     ~ApiKeyEntry();
 
     QByteArray getBodyJson() const override;
@@ -24,6 +25,7 @@ public:
 
 private:
     QByteArray url, key, notes;
+    void deserializeJson(const QByteArray& body);
 };
 
 #endif // APIKEYENTRY_H

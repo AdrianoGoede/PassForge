@@ -10,30 +10,32 @@
 
 DatabaseHandler::DatabaseHandler(const QString& filePath, const QByteArray& password, const DatabaseHandlerBasicData* options)
 {
-    bool dbIsNew = !QFile::exists(filePath);
-    if (sqlite3_open_v2(filePath.toLatin1(), &this->database, (SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE), nullptr) != SQLITE_OK)
-        throw std::runtime_error(sqlite3_errmsg(this->database));
+    try {
+        bool dbIsNew = !QFile::exists(filePath);
+        if (sqlite3_open_v2(filePath.toLatin1(), &this->database, (SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE), nullptr) != SQLITE_OK)
+            throw std::runtime_error(sqlite3_errmsg(this->database));
 
-    if (dbIsNew) {
-        if (!options) throw std::runtime_error("Database options not informed");
-        this->dbBasicData = *options;
-        this->dbBasicData.KeySalt = Crypto::generateSalt(this->dbBasicData.EncryptionKeyLength);
-        this->setNewDatabaseStructure();
-    }
-    else {
-        this->fetchDatabaseBasicData();
+        if (dbIsNew) {
+            if (!options) throw std::runtime_error("Database options not informed");
+            this->dbBasicData = *options;
+            this->dbBasicData.KeySalt = Crypto::generateSalt(this->dbBasicData.EncryptionKeyLength);
+            this->dbBasicData.PasswordHash = Crypto::getHash(QByteArray(password).append(this->dbBasicData.KeySalt), DATABASE_DEFAULT_PASSWORD_ALGORITHM);
+            this->setNewDatabaseStructure();
+        }
+        else
+            this->fetchDatabaseBasicData();
+
+        if (Crypto::getHash(QByteArray(password).append(this->dbBasicData.KeySalt), DATABASE_DEFAULT_PASSWORD_ALGORITHM) != this->dbBasicData.PasswordHash)
+            throw std::runtime_error("Failed to unlock database");
+        this->masterEncryptionKey = Crypto::deriveKey(password, this->dbBasicData.KeySalt, this->dbBasicData.EncryptionKeyLength, this->dbBasicData.KeyDerivationRounds, this->dbBasicData.KeyDerivationFunction);
+
         this->fetchDatabaseSettingsData();
+        this->dbBasicData.EncryptionAlgorithm = this->getCipherSetting(this->dbBasicData.EncryptionAlgorithm, this->masterEncryptionKey.length() * 8);
     }
-
-    if (options->KeyDerivationFunction == "PBKDF2")
-        this->masterEncryptionKey = Crypto::deriveKeyPbkdf2(password, this->dbBasicData.KeySalt, this->dbBasicData.EncryptionKeyLength, this->dbBasicData.KeyDerivationRounds);
-    else if (options->KeyDerivationFunction == "Scrypt")
-        this->masterEncryptionKey = Crypto::deriveKeyScrypt(password, this->dbBasicData.KeySalt, this->dbBasicData.EncryptionKeyLength, this->dbBasicData.KeyDerivationRounds);
-    else if (options->KeyDerivationFunction == "Argon2id")
-        this->masterEncryptionKey = Crypto::deriveKeyArgon2id(password, this->dbBasicData.KeySalt, this->dbBasicData.EncryptionKeyLength, this->dbBasicData.KeyDerivationRounds);
-    else throw std::runtime_error("Key derivation function not supported");
-
-    this->dbBasicData.EncryptionAlgorithm = this->getCipherSetting(this->dbBasicData.EncryptionAlgorithm, this->masterEncryptionKey.length() * 8);
+    catch (...) {
+        Crypto::wipeMemory(this->masterEncryptionKey.data(), this->masterEncryptionKey.length());
+        throw;
+    }
 }
 
 DatabaseHandler::~DatabaseHandler()
@@ -45,7 +47,7 @@ DatabaseHandler::~DatabaseHandler()
 
 void DatabaseHandler::saveDatabaseEntry(const DatabaseEntry& entry)
 {
-    QByteArray randomKey =Crypto::generateRandomKey(this->dbBasicData.EncryptionKeyLength);
+    QByteArray randomKey = Crypto::generateRandomKey(this->dbBasicData.EncryptionKeyLength);
     QByteArray header = entry.getHeaderJson(), body = entry.getBodyJson();
 
     QByteArray encryptedRandomKey = Crypto::encrypt(randomKey, this->masterEncryptionKey, this->dbBasicData.EncryptionAlgorithm);
@@ -158,7 +160,7 @@ void DatabaseHandler::createBasicInfoStructure()
 
     sqlite3_stmt* statement;
     try {
-        sql = "INSERT INTO basic_data (entry_name, value) VALUES (?,?),(?,?),(?,?),(?,?),(?,?),(?,?);";
+        sql = "INSERT INTO basic_data (entry_name, value) VALUES (?,?),(?,?),(?,?),(?,?),(?,?),(?,?),(?,?);";
         if (sqlite3_prepare_v2(this->database, sql.data(), -1, &statement, nullptr) != SQLITE_OK)
             throw std::runtime_error(sqlite3_errmsg(this->database));
 
@@ -179,6 +181,9 @@ void DatabaseHandler::createBasicInfoStructure()
 
         sqlite3_bind_text(statement, 11, DATABASE_BASIC_DATA_KEY_DERIVATION_SALT, -1, SQLITE_TRANSIENT);
         sqlite3_bind_blob(statement, 12, this->dbBasicData.KeySalt.data(), this->dbBasicData.KeySalt.length(), SQLITE_TRANSIENT);
+
+        sqlite3_bind_text(statement, 13, DATABASE_BASIC_DATA_PASSWORD_HASH, -1, SQLITE_TRANSIENT);
+        sqlite3_bind_blob(statement, 14, this->dbBasicData.PasswordHash.data(), this->dbBasicData.PasswordHash.length(), SQLITE_TRANSIENT);
 
         if (sqlite3_step(statement) != SQLITE_DONE) throw std::runtime_error(sqlite3_errmsg(this->database));
     }
@@ -213,19 +218,23 @@ void DatabaseHandler::fetchDatabaseBasicData()
 
     while (sqlite3_step(statement) == SQLITE_ROW) {
         const char* name = reinterpret_cast<const char*>(sqlite3_column_text(statement, 0));
-        const char* value = reinterpret_cast<const char*>(sqlite3_column_text(statement, 1));
-        if (!name || !value) continue;
+        QByteArray value(reinterpret_cast<const char*>(sqlite3_column_blob(statement, 1)), sqlite3_column_bytes(statement, 1));
+        if (!name || value.isEmpty()) continue;
 
         if (std::strcmp(name, DATABASE_BASIC_DATA_DESCRIPTION) == 0)
             this->dbBasicData.Description = value;
         else if (std::strcmp(name, DATABASE_BASIC_DATA_ENC_ALGORITHM) == 0)
             this->dbBasicData.EncryptionAlgorithm = value;
         else if (std::strcmp(name, DATABASE_BASIC_DATA_ENC_KEY_LEN) == 0)
-            this->dbBasicData.EncryptionKeyLength = std::stoi(value);
+            this->dbBasicData.EncryptionKeyLength = std::stoi(value.data());
         else if (std::strcmp(name, DATABASE_BASIC_DATA_KEY_DERIVATION_FUNC) == 0)
             this->dbBasicData.KeyDerivationFunction = value;
+        else if (std::strcmp(name, DATABASE_BASIC_DATA_KEY_DERIVATION_ROUNDS) == 0)
+            this->dbBasicData.KeyDerivationRounds = std::stoi(value.data());
         else if (std::strcmp(name, DATABASE_BASIC_DATA_KEY_DERIVATION_SALT) == 0)
             this->dbBasicData.KeySalt = value;
+        else if (std::strcmp(name, DATABASE_BASIC_DATA_PASSWORD_HASH) == 0)
+            this->dbBasicData.PasswordHash = value;
     }
     sqlite3_finalize(statement);
 }

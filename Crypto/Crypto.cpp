@@ -28,14 +28,14 @@ QByteArray Crypto::generateRandomKey(size_t keyLength)
     return QByteArray(reinterpret_cast<const char*>(key.data()), static_cast<int>(key.size()));
 }
 
-QByteArray Crypto::getHash(const std::string& plainText, const std::string& algorithm)
+QByteArray Crypto::getHash(const QByteArray& plainText, const QString& algorithm)
 {
-    std::unique_ptr<Botan::HashFunction> hashFunction = Botan::HashFunction::create(algorithm);
-    if (!hashFunction) throw std::runtime_error("");
+    std::unique_ptr<Botan::HashFunction> hashFunction = Botan::HashFunction::create(algorithm.toStdString());
+    if (!hashFunction) throw std::runtime_error("Algorithm not supported");
     Botan::secure_vector<uint8_t> bytes(plainText.cbegin(), plainText.cend());
     hashFunction->update(bytes);
     bytes = hashFunction->final();
-    return QByteArray(bytes.data());
+    return QByteArray(reinterpret_cast<const char*>(bytes.data()), static_cast<int>(bytes.size()));
 }
 
 QByteArray Crypto::generateSalt(size_t length)
@@ -43,6 +43,31 @@ QByteArray Crypto::generateSalt(size_t length)
     Botan::AutoSeeded_RNG rng;
     Botan::secure_vector<uint8_t> salt = rng.random_vec(length / 8);
     return QByteArray(reinterpret_cast<const char*>(salt.data()), static_cast<int>(salt.size()));
+}
+
+QByteArray Crypto::deriveKey(const QByteArray &password, const QByteArray &salt, size_t keyLength, size_t iterations, const QString &algorithm)
+{
+    if (algorithm == "PBKDF2")
+        return deriveKeyPbkdf2(password, salt, keyLength, iterations);
+    if (algorithm == "Scrypt")
+        return deriveKeyScrypt(password, salt, keyLength, iterations);
+    if (algorithm == "Argon2id")
+        return deriveKeyArgon2id(password, salt, keyLength, iterations);
+    throw std::runtime_error("Key derivation function not supported");
+}
+
+QByteArray Crypto::encrypt(const QByteArray& plaintext, const QByteArray& key, const QString& cipherSetting)
+{
+    if (QStringList({ CIPHER_SETTINGS_CHACHA20 }).contains(cipherSetting))
+        return encryptWithStreamCipher(plaintext, key, cipherSetting);
+    return encryptWithBlockCipher(plaintext, key, cipherSetting);
+}
+
+QByteArray Crypto::decrypt(const QByteArray &ciphertext, const QByteArray &key, const QString &cipherSetting)
+{
+    if (QStringList({ CIPHER_SETTINGS_CHACHA20 }).contains(cipherSetting))
+        return decryptWithStreamCipher(ciphertext, key, cipherSetting);
+    return decryptWithBlockCipher(ciphertext, key, cipherSetting);
 }
 
 QByteArray Crypto::deriveKeyPbkdf2(const QByteArray& password, const QByteArray& salt, size_t keyLength, size_t iterations)
@@ -78,22 +103,8 @@ QByteArray Crypto::deriveKeyArgon2id(const QByteArray& password, const QByteArra
         KEY_DERIVATION_ARGON2_PARALLELISM,
         KEY_DERIVATION_ARGON2_MEMORY,
         iterations
-    );
+        );
     return QByteArray(reinterpret_cast<const char*>(buffer.data()), static_cast<int>(buffer.size()));
-}
-
-QByteArray Crypto::encrypt(const QByteArray& plaintext, const QByteArray& key, const QString& cipherSetting)
-{
-    if (QStringList({ CIPHER_SETTINGS_CHACHA20 }).contains(cipherSetting))
-        return encryptWithStreamCipher(plaintext, key, cipherSetting);
-    return encryptWithBlockCipher(plaintext, key, cipherSetting);
-}
-
-QByteArray Crypto::decrypt(const QByteArray &ciphertext, const QByteArray &key, const QString &cipherSetting)
-{
-    if (QStringList({ CIPHER_SETTINGS_CHACHA20 }).contains(cipherSetting))
-        return decryptWithStreamCipher(ciphertext, key, cipherSetting);
-    return decryptWithBlockCipher(ciphertext, key, cipherSetting);
 }
 
 QByteArray Crypto::encryptWithBlockCipher(const QByteArray& plaintext, const QByteArray& key, const QString& cipherSetting)

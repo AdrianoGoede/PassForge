@@ -102,7 +102,7 @@ QByteArray PasswordGenerator::generateHash() const
 {
     QByteArray plainText(ui->HashPlainTextEdit->toPlainText().toUtf8());
     if (plainText.isEmpty()) return QByteArray();
-    QByteArray hash = Crypto::getHash(plainText.toStdString(), ui->HashAlgorithmComboBox->currentText().toStdString().c_str());
+    QByteArray hash = Crypto::getHash(plainText, ui->HashAlgorithmComboBox->currentText().toStdString().c_str());
     Crypto::wipeMemory(plainText.data(), (sizeof(char) * plainText.length()));
     return hash;
 }

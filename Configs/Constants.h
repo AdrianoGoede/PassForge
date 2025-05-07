@@ -17,6 +17,7 @@
 #define DATABASE_BASIC_DATA_KEY_DERIVATION_FUNC   "KeyDerivationFunction"
 #define DATABASE_BASIC_DATA_KEY_DERIVATION_ROUNDS "KeyDerivationRounds"
 #define DATABASE_BASIC_DATA_KEY_DERIVATION_SALT   "KeyDerivationSalt"
+#define DATABASE_BASIC_DATA_PASSWORD_HASH         "PasswordHash"
 
 #define DATABASE_SETTINGS_DATA_GENERAL            "GeneralSection"
 #define DATABASE_SETTINGS_DATA_SECURITY           "SecuritySection"

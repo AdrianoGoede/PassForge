@@ -18,6 +18,7 @@ struct DatabaseHandlerBasicData
     QString KeyDerivationFunction;
     uint32_t KeyDerivationRounds;
     QByteArray KeySalt;
+    QByteArray PasswordHash;
 };
 
 class DatabaseHandler

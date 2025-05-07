@@ -37,7 +37,7 @@ DatabaseHandler* DatabaseCreator::getDatabaseHandler()
         ui->DatabaseKeyDerivationFunctionComboBox->currentText().trimmed(),
         (uint32_t)ui->DatabaseKeyDerivationTransformRoundsSpinBox->value()
     };
-    return new DatabaseHandler(ui->DatabaseNameLineEdit->text(), ui->DatabasePasswordLineEdit->text().toUtf8(), &basicData);
+    return new DatabaseHandler(QString("%1.pfdb").arg(ui->DatabaseNameLineEdit->text()), ui->DatabasePasswordLineEdit->text().toUtf8(), &basicData);
 }
 
 void DatabaseCreator::selectFilePath() { ui->DatabaseNameLineEdit->setText(QFileDialog::getSaveFileName(this, "Select location", QString(), DATABASE_FILE_FILTER)); }

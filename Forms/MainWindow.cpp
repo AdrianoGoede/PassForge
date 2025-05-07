@@ -41,7 +41,7 @@ void MainWindow::CreateNewDatabase()
 void MainWindow::OpenExistingDatabase()
 {
     try {
-        QString dbPath = QFileDialog::getOpenFileName(this, "", QString(), DATABASE_FILE_FILTER);
+        QString dbPath = QFileDialog::getOpenFileName(this, QString(), QString(), DATABASE_FILE_FILTER);
         if (dbPath.isEmpty()) return;
 
         bool ok;

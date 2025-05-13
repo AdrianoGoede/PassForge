@@ -3,8 +3,10 @@
 #include "DatabaseCreator.h"
 #include "DatabaseSettings.h"
 #include "PasswordGenerator.h"
+#include "ApiKeyEntryEditor.h"
 #include "../Configs/Configs.h"
 #include "../Crypto/Crypto.h"
+#include <QStandardItemModel>
 #include <QInputDialog>
 #include <QMessageBox>
 #include <QFileDialog>
@@ -14,9 +16,13 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWi
 {
     ui->setupUi(this);
     ui->CentralWidget->setLayout(ui->CentralGridLayout);
-    ui->HeaderInfoTabCredential->setLayout(ui->CredentialHeaderInfoLayout);
-    ui->HeaderInfoTabCryptocurrency->setLayout(ui->CryptocurrencyHeaderInfoLayout);
-    ui->HeaderInfoTabApiKey->setLayout(ui->ApiKeyHeaderInfoLayout);
+
+    QMenu* newEntryMenu = new QMenu(ui->AddEntryPushButton);
+    newEntryMenu->addAction("Credential", this, &MainWindow::OpenNewCredentialWindow);
+    newEntryMenu->addAction("Api Key", this, &MainWindow::OpenNewApiKeyWindow);
+    newEntryMenu->addAction("Cryptocurrency", this, &MainWindow::OpenNewCryptocurrency);
+    ui->AddEntryPushButton->setMenu(newEntryMenu);
+
     connect(ui->ActionDatabaseNew, &QAction::triggered, this, &MainWindow::CreateNewDatabase);
     connect(ui->ActionDatabaseOpen, &QAction::triggered, this, &MainWindow::OpenExistingDatabase);
     connect(ui->ActionDatabaseSettings, &QAction::triggered, this, &MainWindow::OpenDatabaseSettings);
@@ -68,9 +74,50 @@ void MainWindow::OpenPasswordGenerator()
     generator.exec();
 }
 
+void MainWindow::OpenNewCredentialWindow()
+{
+
+}
+
+void MainWindow::OpenNewApiKeyWindow()
+{
+    try {
+        ApiKeyEntry dbEntry;
+        if (ApiKeyEntryEditor(this, &dbEntry).exec() == QDialog::Accepted) {
+            this->databaseHandler->saveDatabaseEntry(dbEntry);
+            this->loadDatabase();
+        }
+    }
+    catch (const std::runtime_error& error) { QMessageBox::critical(this, "Error", error.what()); }
+}
+
+void MainWindow::OpenNewCryptocurrency()
+{
+
+}
+
 void MainWindow::QuitApplication() { QApplication::closeAllWindows(); }
 
 void MainWindow::loadDatabase()
 {
+    QStandardItemModel* directoryTreeModel = new QStandardItemModel(this);
+    ui->DirectoryStructureTreeView->setModel(directoryTreeModel);
+    QStandardItem* currentNode = new QStandardItem("Root");
+    directoryTreeModel->invisibleRootItem()->appendRow(currentNode);
 
+    if (!this->databaseHandler) return;
+    for (const DatabaseEntry& dbEntry : this->databaseHandler->getEntryHeaders()) {
+        for (const QByteArray& directoryPart : dbEntry.getPath().split('/'))
+            if (!directoryPart.isEmpty())
+                currentNode = this->addDirectoryEntry(currentNode, directoryPart.trimmed());
+    }
+}
+
+QStandardItem* MainWindow::addDirectoryEntry(QStandardItem* node, const QByteArray& folderName)
+{
+    for (size_t i = 0; i < node->rowCount(); i++)
+        if (!node || node->child(i)->text().toUtf8() == folderName) return node->child(i);
+    QStandardItem* child = new QStandardItem(folderName);
+    node->appendRow(child);
+    return child;
 }

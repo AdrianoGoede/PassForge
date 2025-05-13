@@ -27,10 +27,10 @@ DatabaseHandler::DatabaseHandler(const QString& filePath, const QByteArray& pass
 
         if (Crypto::getHash(QByteArray(password).append(this->dbBasicData.KeySalt), DATABASE_DEFAULT_PASSWORD_ALGORITHM) != this->dbBasicData.PasswordHash)
             throw std::runtime_error("Failed to unlock database");
-        this->masterEncryptionKey = Crypto::deriveKey(password, this->dbBasicData.KeySalt, this->dbBasicData.EncryptionKeyLength, this->dbBasicData.KeyDerivationRounds, this->dbBasicData.KeyDerivationFunction);
+        this->masterEncryptionKey = Crypto::deriveKey(password, this->dbBasicData.KeySalt, (this->dbBasicData.EncryptionKeyLength / 8), this->dbBasicData.KeyDerivationRounds, this->dbBasicData.KeyDerivationFunction);
 
         this->fetchDatabaseSettingsData();
-        this->dbBasicData.EncryptionAlgorithm = this->getCipherSetting(this->dbBasicData.EncryptionAlgorithm, this->masterEncryptionKey.length() * 8);
+        this->dbBasicData.EncryptionAlgorithm = this->getCipherSetting(this->dbBasicData.EncryptionAlgorithm, (this->masterEncryptionKey.length() * 8));
     }
     catch (...) {
         Crypto::wipeMemory(this->masterEncryptionKey.data(), this->masterEncryptionKey.length());
@@ -47,7 +47,7 @@ DatabaseHandler::~DatabaseHandler()
 
 void DatabaseHandler::saveDatabaseEntry(const DatabaseEntry& entry)
 {
-    QByteArray randomKey = Crypto::generateRandomKey(this->dbBasicData.EncryptionKeyLength);
+    QByteArray randomKey = Crypto::generateRandomKey(this->dbBasicData.EncryptionKeyLength / 8);
     QByteArray header = entry.getHeaderJson(), body = entry.getBodyJson();
 
     QByteArray encryptedRandomKey = Crypto::encrypt(randomKey, this->masterEncryptionKey, this->dbBasicData.EncryptionAlgorithm);

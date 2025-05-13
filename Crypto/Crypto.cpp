@@ -6,6 +6,7 @@
 #include <botan-2/botan/scrypt.h>
 #include <botan-2/botan/argon2.h>
 #include <botan-2/botan/hex.h>
+#include <botan/aead.h>
 #include <QString>
 #include <QStringList>
 
@@ -109,10 +110,10 @@ QByteArray Crypto::deriveKeyArgon2id(const QByteArray& password, const QByteArra
 
 QByteArray Crypto::encryptWithBlockCipher(const QByteArray& plaintext, const QByteArray& key, const QString& cipherSetting)
 {
-    uint16_t keyLength = (key.length() * 8);
-    if (!QStringList({SUPPORTED_BLOCK_CYPHER_KEY_SETTINGS}).contains(QString::number(keyLength)))
+    size_t keyLength = (key.length() * 8);
+    if (!QStringList({ SUPPORTED_BLOCK_CYPHER_KEY_SETTINGS }).contains(std::to_string(keyLength)))
         throw std::runtime_error(std::to_string(keyLength) + " bits key setting not supported");
-    std::unique_ptr<Botan::Cipher_Mode> cipher = Botan::Cipher_Mode::create(cipherSetting.toStdString(), Botan::ENCRYPTION);
+    std::unique_ptr<Botan::AEAD_Mode> cipher = Botan::AEAD_Mode::create(cipherSetting.toStdString(), Botan::ENCRYPTION);
     if (!cipher) throw std::runtime_error("Algorithm not supported");
     cipher->set_key(Botan::secure_vector<uint8_t>(key.cbegin(), key.cend()));
 
@@ -131,10 +132,10 @@ QByteArray Crypto::encryptWithBlockCipher(const QByteArray& plaintext, const QBy
 
 QByteArray Crypto::decryptWithBlockCipher(const QByteArray& ciphertext, const QByteArray& key, const QString& cipherSetting)
 {
-    uint16_t keyLength = (key.length() * 8);
+    size_t keyLength = (key.length() * 8);
     if (!QStringList({SUPPORTED_BLOCK_CYPHER_KEY_SETTINGS}).contains(QString::number(keyLength)))
         throw std::runtime_error(std::to_string(keyLength) + " bits key setting not supported");
-    std::unique_ptr<Botan::Cipher_Mode> cipher = Botan::Cipher_Mode::create(cipherSetting.toStdString(), Botan::DECRYPTION);
+    std::unique_ptr<Botan::AEAD_Mode> cipher = Botan::AEAD_Mode::create(cipherSetting.toStdString(), Botan::DECRYPTION);
     if (!cipher) throw std::runtime_error("Algorithm not supported");
     cipher->set_key(Botan::secure_vector<uint8_t>(key.cbegin(), key.cend()));
 

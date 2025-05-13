@@ -3,6 +3,7 @@
 
 #include <QMainWindow>
 #include "../Database/DatabaseHandler.h"
+#include <QStandardItem>
 
 QT_BEGIN_NAMESPACE
 namespace Ui {
@@ -23,6 +24,9 @@ private slots:
     void OpenExistingDatabase();
     void OpenDatabaseSettings();
     void OpenPasswordGenerator();
+    void OpenNewCredentialWindow();
+    void OpenNewApiKeyWindow();
+    void OpenNewCryptocurrency();
     void QuitApplication();
 
 private:
@@ -30,6 +34,7 @@ private:
     std::unique_ptr<DatabaseHandler> databaseHandler = nullptr;
 
     void loadDatabase();
+    QStandardItem* addDirectoryEntry(QStandardItem* node, const QByteArray& folderName);
 };
 
 #endif // MAINWINDOW_H

@@ -5,7 +5,6 @@
 #include "PasswordGenerator.h"
 #include "ApiKeyEntryEditor.h"
 #include "../Configs/Configs.h"
-#include "../Crypto/Crypto.h"
 #include <QStandardItemModel>
 #include <QInputDialog>
 #include <QMessageBox>
@@ -51,12 +50,11 @@ void MainWindow::OpenExistingDatabase()
         if (dbPath.isEmpty()) return;
 
         bool ok;
-        QByteArray password = QInputDialog::getText(this, "Enter database password", "Password", QLineEdit::EchoMode::Password, "", &ok).toUtf8();
+        SecureQByteArray password(QInputDialog::getText(this, "Enter database password", "Password", QLineEdit::EchoMode::Password, "", &ok).toUtf8());
         if (!ok) return;
         if (password.isEmpty()) throw std::runtime_error("Database password cannot be empty");
 
         this->databaseHandler.reset(new DatabaseHandler(dbPath, password));
-        Crypto::wipeMemory(password.data(), password.length());
         this->loadDatabase();
     }
     catch (const std::runtime_error& error) { QMessageBox::critical(this, "Error", error.what()); }
@@ -107,6 +105,7 @@ void MainWindow::loadDatabase()
 
     if (!this->databaseHandler) return;
     for (const DatabaseEntry& dbEntry : this->databaseHandler->getEntryHeaders()) {
+        currentNode = directoryTreeModel->invisibleRootItem()->child(0);
         for (const QByteArray& directoryPart : dbEntry.getPath().split('/'))
             if (!directoryPart.isEmpty())
                 currentNode = this->addDirectoryEntry(currentNode, directoryPart.trimmed());

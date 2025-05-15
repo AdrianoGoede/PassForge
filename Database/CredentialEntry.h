@@ -2,32 +2,33 @@
 #define CREDENTIALENTRY_H
 
 #include "DatabaseEntry.h"
+#include "../Crypto/SecureQByteArray.h"
 #include <QByteArray>
 
 class CredentialEntry : public DatabaseEntry
 {
 public:
     CredentialEntry();
-    CredentialEntry(const QByteArray& header, const QByteArray& body);
-    CredentialEntry(const DatabaseEntry& header, const QByteArray& body);
+    CredentialEntry(const SecureQByteArray& header, const SecureQByteArray& body);
+    CredentialEntry(const DatabaseEntry& header, const SecureQByteArray& body);
     ~CredentialEntry();
 
-    QByteArray getBodyJson() const override;
+    SecureQByteArray getBodyJson() const override;
 
-    const QByteArray& getUsername() const;
-    void setUsername(const QByteArray& newUsername);
+    const SecureQByteArray& getUsername() const;
+    void setUsername(QByteArray& newUsername);
 
-    const QByteArray& getPassword() const;
-    void setPassword(const QByteArray& newPassword);
+    const SecureQByteArray& getPassword() const;
+    void setPassword(QByteArray& newPassword);
 
-    const QByteArray& getNotes() const;
-    void setNotes(const QByteArray& newNotes);
+    const SecureQByteArray& getNotes() const;
+    void setNotes(QByteArray& newNotes);
 
-    const QByteArray& getUrl() const;
-    void setUrl(const QByteArray& newUrl);
+    const SecureQByteArray& getUrl() const;
+    void setUrl(QByteArray& newUrl);
 
 private:
-    QByteArray username, password, notes, url;
+    SecureQByteArray username, password, notes, url;
     void deserializeJson(const QByteArray& body);
 };
 

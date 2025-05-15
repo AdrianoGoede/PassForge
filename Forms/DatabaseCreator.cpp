@@ -1,7 +1,6 @@
 #include "DatabaseCreator.h"
 #include "ui_DatabaseCreator.h"
 #include "../Configs/Configs.h"
-#include "../Crypto/Crypto.h"
 #include <QStringList>
 #include <QFileDialog>
 #include <QByteArray>
@@ -37,7 +36,7 @@ DatabaseHandler* DatabaseCreator::getDatabaseHandler()
         ui->DatabaseKeyDerivationFunctionComboBox->currentText().trimmed(),
         (uint32_t)ui->DatabaseKeyDerivationTransformRoundsSpinBox->value()
     };
-    return new DatabaseHandler(QString("%1.pfdb").arg(ui->DatabaseNameLineEdit->text()), ui->DatabasePasswordLineEdit->text().toUtf8(), &basicData);
+    return new DatabaseHandler(QString("%1.pfdb").arg(ui->DatabaseNameLineEdit->text()), SecureQByteArray(ui->DatabasePasswordLineEdit->text().toUtf8()), &basicData);
 }
 
 void DatabaseCreator::selectFilePath() { ui->DatabaseNameLineEdit->setText(QFileDialog::getSaveFileName(this, "Select location", QString(), DATABASE_FILE_FILTER)); }
@@ -79,8 +78,8 @@ void DatabaseCreator::setOkButtonEnabled()
 void DatabaseCreator::validateCurrentState()
 {
     QString dbName = ui->DatabaseNameLineEdit->text();
-    QByteArray passwd1 = ui->DatabasePasswordLineEdit->text().toUtf8();
-    QByteArray passwd2 = ui->DatabasePasswordRepeatLineEdit->text().toUtf8();
+    SecureQByteArray passwd1(ui->DatabasePasswordLineEdit->text().toUtf8());
+    SecureQByteArray passwd2(ui->DatabasePasswordRepeatLineEdit->text().toUtf8());
 
     QString error;
     if (dbName.isEmpty())
@@ -89,9 +88,6 @@ void DatabaseCreator::validateCurrentState()
         error += QString("Password must be at least %1 characters long").arg(DATABASE_MIN_PASSWORD_LENGTH);
     else if (passwd1 != passwd2)
         error += "The passwords don't match";
-
-    Crypto::wipeMemory(passwd1.data(), passwd1.length());
-    Crypto::wipeMemory(passwd2.data(), passwd2.length());
 
     if (!error.isEmpty()) throw std::runtime_error(error.toStdString());
 }

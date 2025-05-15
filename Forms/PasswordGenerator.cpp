@@ -31,11 +31,11 @@ PasswordGenerator::PasswordGenerator(QWidget *parent) : QDialog(parent), ui(new 
 
 PasswordGenerator::~PasswordGenerator() { delete ui; }
 
-QString PasswordGenerator::getValue() const{ return ui->PasswordLineEdit->text(); }
+SecureQByteArray PasswordGenerator::getValue() const { return ui->PasswordLineEdit->text().toUtf8(); }
 
 void PasswordGenerator::generatePassword()
 {
-    QByteArray value;
+    SecureQByteArray value;
     switch (ui->OptionsTabWidget->currentIndex()) {
         case 0: value.append(this->generateRandomPassword()); break;
         case 1: value.append(this->generatePassphrase()); break;
@@ -43,17 +43,15 @@ void PasswordGenerator::generatePassword()
         default: return;
     }
     ui->PasswordLineEdit->setText(value);
-    Crypto::wipeMemory(value.data(), value.length());
 }
 
 void PasswordGenerator::validatePassword()
 {
-    QByteArray passwd = ui->PasswordLineEdit->text().toUtf8();
+    SecureQByteArray passwd(ui->PasswordLineEdit->text().toUtf8());
     ui->OkPushButton->setEnabled(!passwd.isEmpty());
-    Crypto::wipeMemory(passwd.data(), passwd.length());
 }
 
-QByteArray PasswordGenerator::generateRandomPassword() const
+SecureQByteArray PasswordGenerator::generateRandomPassword() const
 {
     QString selectedChars = this->getSelectedCharaters();
     if (selectedChars.isEmpty()) return QByteArray();
@@ -62,7 +60,7 @@ QByteArray PasswordGenerator::generateRandomPassword() const
     uint32_t randomValues[newPasswordLength];
     Crypto::getRandomUnsignedIntegers(randomValues, newPasswordLength, 0, (selectedChars.length() - 1));
 
-    QByteArray result;
+    SecureQByteArray result;
     for (uint32_t i = 0; i < newPasswordLength; i++)
         result.append((selectedChars.at(randomValues[i]).toLatin1()));
 
@@ -70,7 +68,7 @@ QByteArray PasswordGenerator::generateRandomPassword() const
     return result;
 }
 
-QByteArray PasswordGenerator::generatePassphrase()
+SecureQByteArray PasswordGenerator::generatePassphrase()
 {
     this->loadWordlist();
 
@@ -78,11 +76,11 @@ QByteArray PasswordGenerator::generatePassphrase()
     uint32_t randomValues[newPasswordLength];
     Crypto::getRandomUnsignedIntegers(randomValues, newPasswordLength, 0, (this->wordlist.size() - 1));
 
-    QByteArray separator(!ui->PassphraseSeparatorLineEdit->text().isEmpty() ? ui->PassphraseSeparatorLineEdit->text().toUtf8() : " ");
-    QByteArray result;
+    SecureQByteArray separator(!ui->PassphraseSeparatorLineEdit->text().isEmpty() ? ui->PassphraseSeparatorLineEdit->text().toUtf8() : " ");
+    SecureQByteArray result;
     for (uint32_t i = 0; i < newPasswordLength; i++) {
         if (i > 0) result.append(separator);
-        QByteArray word = this->wordlist.at(randomValues[i]).toUtf8();
+        SecureQByteArray word(this->wordlist.at(randomValues[i]).toUtf8());
         switch (ui->PassphraseWordCaseComboBox->currentIndex()) {
             case 0: result.append(word.toLower()); break;
             case 1: result.append(word.toUpper()); break;
@@ -91,19 +89,17 @@ QByteArray PasswordGenerator::generatePassphrase()
                 result.append(word.mid(1).toLower());
             }; break;
         }
-        Crypto::wipeMemory(word.data(), (sizeof(char) * word.length()));
     }
 
     Crypto::wipeMemory(randomValues, sizeof(randomValues));
     return result;
 }
 
-QByteArray PasswordGenerator::generateHash() const
+SecureQByteArray PasswordGenerator::generateHash() const
 {
-    QByteArray plainText(ui->HashPlainTextEdit->toPlainText().toUtf8());
-    if (plainText.isEmpty()) return QByteArray();
-    QByteArray hash = Crypto::getHash(plainText, ui->HashAlgorithmComboBox->currentText().toStdString().c_str());
-    Crypto::wipeMemory(plainText.data(), (sizeof(char) * plainText.length()));
+    SecureQByteArray plainText(ui->HashPlainTextEdit->toPlainText().toUtf8());
+    if (plainText.isEmpty()) return SecureQByteArray();
+    SecureQByteArray hash = Crypto::getHash(plainText, ui->HashAlgorithmComboBox->currentText().toUtf8());
     return hash;
 }
 

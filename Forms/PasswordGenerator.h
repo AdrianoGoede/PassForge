@@ -4,6 +4,7 @@
 #include <QDialog>
 #include <QString>
 #include <QByteArray>
+#include "../Crypto/SecureQByteArray.h"
 
 namespace Ui {
 class PasswordGenerator;
@@ -16,7 +17,7 @@ class PasswordGenerator : public QDialog
 public:
     explicit PasswordGenerator(QWidget *parent = nullptr);
     ~PasswordGenerator();
-    QString getValue() const;
+    SecureQByteArray getValue() const;
 
 private slots:
     void generatePassword();
@@ -34,9 +35,9 @@ private:
     void setDefaultWordlists();
     void loadWordlist();
     QString getSelectedCharaters() const;
-    QByteArray generateRandomPassword() const;
-    QByteArray generatePassphrase();
-    QByteArray generateHash() const;
+    SecureQByteArray generateRandomPassword() const;
+    SecureQByteArray generatePassphrase();
+    SecureQByteArray generateHash() const;
 };
 
 #endif // PASSWORDGENERATOR_H

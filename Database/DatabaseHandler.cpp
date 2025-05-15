@@ -2,61 +2,49 @@
 #include "../Crypto/Crypto.h"
 #include "../Configs/Constants.h"
 #include "../Configs/Configs.h"
-#include "../Crypto/Crypto.h"
 #include <QByteArray>
 #include <stdexcept>
 #include <sqlite3.h>
 #include <QFile>
 
-DatabaseHandler::DatabaseHandler(const QString& filePath, const QByteArray& password, const DatabaseHandlerBasicData* options)
+DatabaseHandler::DatabaseHandler(const QString& filePath, const SecureQByteArray& password, const DatabaseHandlerBasicData* options)
 {
-    try {
-        bool dbIsNew = !QFile::exists(filePath);
-        if (sqlite3_open_v2(filePath.toLatin1(), &this->database, (SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE), nullptr) != SQLITE_OK)
-            throw std::runtime_error(sqlite3_errmsg(this->database));
+    bool dbIsNew = !QFile::exists(filePath);
+    if (sqlite3_open_v2(filePath.toLatin1(), &this->database, (SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE), nullptr) != SQLITE_OK)
+        throw std::runtime_error(sqlite3_errmsg(this->database));
 
-        if (dbIsNew) {
-            if (!options) throw std::runtime_error("Database options not informed");
-            this->dbBasicData = *options;
-            this->dbBasicData.KeySalt = Crypto::generateSalt(this->dbBasicData.EncryptionKeyLength);
-            this->dbBasicData.PasswordHash = Crypto::getHash(QByteArray(password).append(this->dbBasicData.KeySalt), DATABASE_DEFAULT_PASSWORD_ALGORITHM);
-            this->setNewDatabaseStructure();
-        }
-        else
-            this->fetchDatabaseBasicData();
-
-        if (Crypto::getHash(QByteArray(password).append(this->dbBasicData.KeySalt), DATABASE_DEFAULT_PASSWORD_ALGORITHM) != this->dbBasicData.PasswordHash)
-            throw std::runtime_error("Failed to unlock database");
-        this->masterEncryptionKey = Crypto::deriveKey(password, this->dbBasicData.KeySalt, (this->dbBasicData.EncryptionKeyLength / 8), this->dbBasicData.KeyDerivationRounds, this->dbBasicData.KeyDerivationFunction);
-
-        this->fetchDatabaseSettingsData();
-        this->dbBasicData.EncryptionAlgorithm = this->getCipherSetting(this->dbBasicData.EncryptionAlgorithm, (this->masterEncryptionKey.length() * 8));
+    if (dbIsNew) {
+        if (!options) throw std::runtime_error("Database options not informed");
+        this->dbBasicData = *options;
+        this->dbBasicData.KeySalt = Crypto::generateSalt(this->dbBasicData.EncryptionKeyLength);
+        this->dbBasicData.PasswordHash = Crypto::getHash(SecureQByteArray(password) + this->dbBasicData.KeySalt, DATABASE_DEFAULT_PASSWORD_ALGORITHM);
+        this->setNewDatabaseStructure();
     }
-    catch (...) {
-        Crypto::wipeMemory(this->masterEncryptionKey.data(), this->masterEncryptionKey.length());
-        throw;
-    }
+    else
+        this->fetchDatabaseBasicData();
+
+    if (Crypto::getHash(QByteArray(password) + this->dbBasicData.KeySalt, DATABASE_DEFAULT_PASSWORD_ALGORITHM) != this->dbBasicData.PasswordHash)
+        throw std::runtime_error("Failed to unlock database");
+    this->masterEncryptionKey = Crypto::deriveKey(password, std::move(this->dbBasicData.KeySalt), (this->dbBasicData.EncryptionKeyLength / 8), this->dbBasicData.KeyDerivationRounds, this->dbBasicData.KeyDerivationFunction);
+
+    this->fetchDatabaseSettingsData();
+    this->dbBasicData.EncryptionAlgorithm = this->getCipherSetting(this->dbBasicData.EncryptionAlgorithm, (this->masterEncryptionKey.length() * 8));
 }
 
 DatabaseHandler::~DatabaseHandler()
 {
-    Crypto::wipeMemory(this->masterEncryptionKey.data(), this->masterEncryptionKey.length());
     if (this->database)
         sqlite3_close(this->database);
 }
 
 void DatabaseHandler::saveDatabaseEntry(const DatabaseEntry& entry)
 {
-    QByteArray randomKey = Crypto::generateRandomKey(this->dbBasicData.EncryptionKeyLength / 8);
-    QByteArray header = entry.getHeaderJson(), body = entry.getBodyJson();
+    SecureQByteArray randomKey = Crypto::generateRandomKey(this->dbBasicData.EncryptionKeyLength / 8);
+    SecureQByteArray header = entry.getHeaderJson(), body = entry.getBodyJson();
 
     QByteArray encryptedRandomKey = Crypto::encrypt(randomKey, this->masterEncryptionKey, this->dbBasicData.EncryptionAlgorithm);
     QByteArray encryptedHeader = Crypto::encrypt(header, randomKey, this->dbBasicData.EncryptionAlgorithm);
     QByteArray encryptedBody = Crypto::encrypt(body, randomKey, this->dbBasicData.EncryptionAlgorithm);
-
-    Crypto::wipeMemory(randomKey.data(), randomKey.length());
-    Crypto::wipeMemory(header.data(), header.length());
-    Crypto::wipeMemory(body.data(), body.length());
 
     const std::string sql = (entry.getEntryId() <= 0
                              ? "INSERT INTO secret_data (entry_key,header_data,body_data) VALUES (?,?,?)"
@@ -94,19 +82,17 @@ QVector<DatabaseEntry> DatabaseHandler::getEntryHeaders() const
     try {
         while (sqlite3_step(statement) == SQLITE_ROW) {
             int entryId = sqlite3_column_int(statement, 0);
-            QByteArray entryKey = Crypto::decrypt(
-                QByteArray(reinterpret_cast<const char*>(sqlite3_column_blob(statement, 1)), sqlite3_column_bytes(statement, 1)),
+            SecureQByteArray entryKey = Crypto::decrypt(
+                SecureQByteArray(reinterpret_cast<const char*>(sqlite3_column_blob(statement, 1)), sqlite3_column_bytes(statement, 1)),
                 this->masterEncryptionKey,
                 this->dbBasicData.EncryptionAlgorithm
             );
-            QByteArray header = Crypto::decrypt(
-                QByteArray(reinterpret_cast<const char*>(sqlite3_column_blob(statement, 2)), sqlite3_column_bytes(statement, 2)),
+            SecureQByteArray header = Crypto::decrypt(
+                SecureQByteArray(reinterpret_cast<const char*>(sqlite3_column_blob(statement, 2)), sqlite3_column_bytes(statement, 2)),
                 entryKey,
                 this->dbBasicData.EncryptionAlgorithm
             );
             results.push_back(DatabaseEntry(header, entryId));
-            Crypto::wipeMemory(header.data(), header.length());
-            Crypto::wipeMemory(entryKey.data(), entryKey.length());
         }
         sqlite3_finalize(statement);
     }
@@ -120,28 +106,22 @@ QVector<DatabaseEntry> DatabaseHandler::getEntryHeaders() const
 
 CredentialEntry DatabaseHandler::getCredentialEntry(const DatabaseEntry& entry) const
 {
-    QByteArray body = this->getDatabaseEntryBody(entry.getEntryId());
+    SecureQByteArray body = this->getDatabaseEntryBody(entry.getEntryId());
     CredentialEntry result(entry, body);
-    result.setEntryId(entry.getEntryId());
-    Crypto::wipeMemory(body.data(), body.length());
     return result;
 }
 
 CryptocurrencyEntry DatabaseHandler::getCryptocurrencyEntry(const DatabaseEntry& entry) const
 {
-    QByteArray body = this->getDatabaseEntryBody(entry.getEntryId());
+    SecureQByteArray body = this->getDatabaseEntryBody(entry.getEntryId());
     CryptocurrencyEntry result(entry, body);
-    result.setEntryId(entry.getEntryId());
-    Crypto::wipeMemory(body.data(), body.length());
     return result;
 }
 
 ApiKeyEntry DatabaseHandler::getApiKeyEntry(const DatabaseEntry& entry) const
 {
-    QByteArray body = this->getDatabaseEntryBody(entry.getEntryId());
+    SecureQByteArray body = this->getDatabaseEntryBody(entry.getEntryId());
     ApiKeyEntry result(entry, body);
-    result.setEntryId(entry.getEntryId());
-    Crypto::wipeMemory(body.data(), body.length());
     return result;
 }
 
@@ -218,7 +198,7 @@ void DatabaseHandler::fetchDatabaseBasicData()
 
     while (sqlite3_step(statement) == SQLITE_ROW) {
         const char* name = reinterpret_cast<const char*>(sqlite3_column_text(statement, 0));
-        QByteArray value(reinterpret_cast<const char*>(sqlite3_column_blob(statement, 1)), sqlite3_column_bytes(statement, 1));
+        SecureQByteArray value(reinterpret_cast<const char*>(sqlite3_column_blob(statement, 1)), sqlite3_column_bytes(statement, 1));
         if (!name || value.isEmpty()) continue;
 
         if (std::strcmp(name, DATABASE_BASIC_DATA_DESCRIPTION) == 0)
@@ -246,38 +226,33 @@ void DatabaseHandler::fetchDatabaseSettingsData()
     if (sqlite3_prepare_v2(this->database, sql, -1, &statement, nullptr) != SQLITE_OK)
         throw std::runtime_error(sqlite3_errmsg(this->database));
 
-    QByteArray generalData, securityData;
+    SecureQByteArray generalData, securityData;
     while (sqlite3_step(statement) == SQLITE_ROW) {
         const char* name = reinterpret_cast<const char*>(sqlite3_column_text(statement, 0));
-        QByteArray sectionKey = Crypto::decrypt(
-            QByteArray(reinterpret_cast<const char*>(sqlite3_column_blob(statement, 1)), sqlite3_column_bytes(statement, 1)),
+        SecureQByteArray sectionKey = Crypto::decrypt(
+            SecureQByteArray(reinterpret_cast<const char*>(sqlite3_column_blob(statement, 1)), sqlite3_column_bytes(statement, 1)),
             this->masterEncryptionKey,
             this->dbBasicData.EncryptionAlgorithm
         );
-        QByteArray value = Crypto::decrypt(
-            QByteArray(reinterpret_cast<const char*>(sqlite3_column_text(statement, 2)), sqlite3_column_bytes(statement, 2)),
+        SecureQByteArray value = Crypto::decrypt(
+            SecureQByteArray(reinterpret_cast<const char*>(sqlite3_column_text(statement, 2)), sqlite3_column_bytes(statement, 2)),
             sectionKey,
             this->dbBasicData.EncryptionAlgorithm
         );
 
         if (name && !value.isEmpty()) {
             if (std::strcmp(name, DATABASE_SETTINGS_DATA_GENERAL) == 0)
-                generalData = value;
+                generalData = std::move(value);
             else if (std::strcmp(name, DATABASE_SETTINGS_DATA_SECURITY) == 0)
-                securityData = value;
+                securityData = std::move(value);
         }
-
-        Crypto::wipeMemory(sectionKey.data(), sectionKey.length());
-        Crypto::wipeMemory(value.data(), value.length());
     }
     sqlite3_finalize(statement);
 
     this->dbSettings = DatabaseHandlerSettings(generalData, securityData);
-    Crypto::wipeMemory(generalData.data(), generalData.length());
-    Crypto::wipeMemory(securityData.data(), securityData.length());
 }
 
-QByteArray DatabaseHandler::getDatabaseEntryBody(int entryId) const
+SecureQByteArray DatabaseHandler::getDatabaseEntryBody(int entryId) const
 {
     sqlite3_stmt* statement;
     const char sql[] = "SELECT entry_key,body_data FROM secret_data WHERE entry_id = ?;";
@@ -289,13 +264,13 @@ QByteArray DatabaseHandler::getDatabaseEntryBody(int entryId) const
         if (sqlite3_step(statement) != SQLITE_ROW)
             throw std::runtime_error(sqlite3_errmsg(this->database));
 
-        QByteArray entryKey = Crypto::decrypt(
-            QByteArray(reinterpret_cast<const char*>(sqlite3_column_blob(statement, 0)), sqlite3_column_bytes(statement, 0)),
+        SecureQByteArray entryKey = Crypto::decrypt(
+            SecureQByteArray(reinterpret_cast<const char*>(sqlite3_column_blob(statement, 0)), sqlite3_column_bytes(statement, 0)),
             this->masterEncryptionKey,
             this->dbBasicData.EncryptionAlgorithm
         );
-        QByteArray body = Crypto::decrypt(
-            QByteArray(reinterpret_cast<const char*>(sqlite3_column_blob(statement, 1)), sqlite3_column_bytes(statement, 1)),
+        SecureQByteArray body = Crypto::decrypt(
+            SecureQByteArray(reinterpret_cast<const char*>(sqlite3_column_blob(statement, 1)), sqlite3_column_bytes(statement, 1)),
             entryKey,
             this->dbBasicData.EncryptionAlgorithm
         );

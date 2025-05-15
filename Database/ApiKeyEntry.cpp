@@ -1,58 +1,38 @@
 #include "ApiKeyEntry.h"
-#include "../Crypto/Crypto.h"
 #include <QJsonDocument>
 #include <QJsonObject>
 
-ApiKeyEntry::ApiKeyEntry() {}
+ApiKeyEntry::ApiKeyEntry() : DatabaseEntry() {}
 
-ApiKeyEntry::ApiKeyEntry(const QByteArray& header, const QByteArray& body) : DatabaseEntry(header) { this->deserializeJson(body); }
+ApiKeyEntry::ApiKeyEntry(const SecureQByteArray& header, const SecureQByteArray& body) : DatabaseEntry(header) { this->deserializeJson(body); }
 
-ApiKeyEntry::ApiKeyEntry(const DatabaseEntry& header, const QByteArray& body) : DatabaseEntry(header) { this->deserializeJson(body); }
+ApiKeyEntry::ApiKeyEntry(const DatabaseEntry& header, const SecureQByteArray& body) : DatabaseEntry(header) { this->deserializeJson(body); }
 
-ApiKeyEntry::~ApiKeyEntry()
-{
-    Crypto::wipeMemory(this->url.data(), this->url.length());
-    Crypto::wipeMemory(this->key.data(), this->key.length());
-    Crypto::wipeMemory(this->notes.data(), this->notes.length());
-}
-
-QByteArray ApiKeyEntry::getBodyJson() const
+SecureQByteArray ApiKeyEntry::getBodyJson() const
 {
     QJsonObject obj;
     obj["url"] = this->url.data();
     obj["key"] = this->key.data();
     obj["notes"] = this->notes.data();
-    return QJsonDocument(obj).toJson(QJsonDocument::JsonFormat::Compact);
+    return SecureQByteArray(QJsonDocument(obj).toJson(QJsonDocument::JsonFormat::Compact));
 }
 
-const QByteArray& ApiKeyEntry::getUrl() const { return this->url; }
+const SecureQByteArray& ApiKeyEntry::getUrl() const { return this->url; }
 
-void ApiKeyEntry::setUrl(const QByteArray& newUrl)
-{
-    Crypto::wipeMemory(this->url.data(), this->url.length());
-    this->url = newUrl;
-}
+void ApiKeyEntry::setUrl(QByteArray&& newUrl) { this->url = SecureQByteArray(std::move(newUrl)); }
 
-const QByteArray& ApiKeyEntry::getKey() const { return this->key; }
+const SecureQByteArray& ApiKeyEntry::getKey() const { return this->key; }
 
-void ApiKeyEntry::setKey(const QByteArray& newKey)
-{
-    Crypto::wipeMemory(this->key.data(), this->key.length());
-    this->key = newKey;
-}
+void ApiKeyEntry::setKey(QByteArray&& newKey) { this->key = SecureQByteArray(std::move(newKey)); }
 
-const QByteArray& ApiKeyEntry::getNotes() const { return this->notes; }
+const SecureQByteArray& ApiKeyEntry::getNotes() const { return this->notes; }
 
-void ApiKeyEntry::setNotes(const QByteArray& newNotes)
-{
-    Crypto::wipeMemory(this->notes.data(), this->notes.length());
-    this->notes = newNotes;
-}
+void ApiKeyEntry::setNotes(QByteArray&& newNotes) { this->notes = SecureQByteArray(std::move(newNotes)); }
 
 void ApiKeyEntry::deserializeJson(const QByteArray& body)
 {
     QJsonObject obj = QJsonDocument::fromJson(body).object();
-    this->url = obj["url"].toString("").toUtf8();
-    this->key = obj["key"].toString("").toUtf8();
-    this->notes = obj["notes"].toString("").toUtf8();
+    this->url = SecureQByteArray(obj["url"].toString("").toUtf8());
+    this->key = SecureQByteArray(obj["key"].toString("").toUtf8());
+    this->notes = SecureQByteArray(obj["notes"].toString("").toUtf8());
 }

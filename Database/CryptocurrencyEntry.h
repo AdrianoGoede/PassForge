@@ -2,32 +2,32 @@
 #define CRYPTOCURRENCYENTRY_H
 
 #include "DatabaseEntry.h"
+#include "../Crypto/SecureQByteArray.h"
 #include <QByteArray>
 
 class CryptocurrencyEntry : public DatabaseEntry
 {
 public:
     CryptocurrencyEntry();
-    CryptocurrencyEntry(const QByteArray& header, const QByteArray& body);
-    CryptocurrencyEntry(const DatabaseEntry& header, const QByteArray& body);
-    ~CryptocurrencyEntry();
+    CryptocurrencyEntry(const SecureQByteArray& header, const SecureQByteArray& body);
+    CryptocurrencyEntry(const DatabaseEntry& header, const SecureQByteArray& body);
 
-    QByteArray getBodyJson() const override;
+    SecureQByteArray getBodyJson() const override;
 
-    const QByteArray& getCryptocurrencyName() const;
-    void setCryptocurrencyName(const QByteArray& newCryptocurrencyName);
+    const SecureQByteArray& getCryptocurrencyName() const;
+    void setCryptocurrencyName(QByteArray& newCryptocurrencyName);
 
-    const QByteArray& getSeed() const;
-    void setSeed(const QByteArray& newSeed);
+    const SecureQByteArray& getSeed() const;
+    void setSeed(QByteArray& newSeed);
 
-    const QByteArray& getMasterPrivateKey() const;
-    void setMasterPrivateKey(const QByteArray& newMasterPrivateKey);
+    const SecureQByteArray& getMasterPrivateKey() const;
+    void setMasterPrivateKey(QByteArray& newMasterPrivateKey);
 
-    const QByteArray& getNotes() const;
-    void setNotes(const QByteArray& newNotes);
+    const SecureQByteArray& getNotes() const;
+    void setNotes(QByteArray& newNotes);
 
 private:
-    QByteArray cryptocurrencyName, seed, masterPrivateKey, notes;
+    SecureQByteArray cryptocurrencyName, seed, masterPrivateKey, notes;
     void deserializeJson(const QByteArray& body);
 };
 

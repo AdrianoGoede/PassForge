@@ -2,29 +2,29 @@
 #define APIKEYENTRY_H
 
 #include "DatabaseEntry.h"
+#include "../Crypto/SecureQByteArray.h"
 #include <QByteArray>
 
 class ApiKeyEntry : public DatabaseEntry
 {
 public:
     ApiKeyEntry();
-    ApiKeyEntry(const QByteArray& header, const QByteArray& body);
-    ApiKeyEntry(const DatabaseEntry& header, const QByteArray& body);
-    ~ApiKeyEntry();
+    ApiKeyEntry(const SecureQByteArray& header, const SecureQByteArray& body);
+    ApiKeyEntry(const DatabaseEntry& header, const SecureQByteArray& body);
 
-    QByteArray getBodyJson() const override;
+    SecureQByteArray getBodyJson() const override;
 
-    const QByteArray& getUrl() const;
-    void setUrl(const QByteArray& newUrl);
+    const SecureQByteArray& getUrl() const;
+    void setUrl(QByteArray&& newUrl);
 
-    const QByteArray& getKey() const;
-    void setKey(const QByteArray& newKey);
+    const SecureQByteArray& getKey() const;
+    void setKey(QByteArray&& newKey);
 
-    const QByteArray& getNotes() const;
-    void setNotes(const QByteArray& newNotes);
+    const SecureQByteArray& getNotes() const;
+    void setNotes(QByteArray&& newNotes);
 
 private:
-    QByteArray url, key, notes;
+    SecureQByteArray url, key, notes;
     void deserializeJson(const QByteArray& body);
 };
 

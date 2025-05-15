@@ -3,35 +3,45 @@
 #include <QJsonDocument>
 #include <QJsonObject>
 
-DatabaseEntry::DatabaseEntry() {}
+DatabaseEntry::DatabaseEntry() { }
 
-DatabaseEntry::DatabaseEntry(const QByteArray &header, int entryId)
+DatabaseEntry::DatabaseEntry(const DatabaseEntry& other)
+{
+    this->entryId = other.getEntryId();
+    this->sequence = other.getSequence();
+    this->entryType = other.getEntryType();
+    this->name = SecureQByteArray(other.getName().data(), other.getName().size());
+    this->path = SecureQByteArray(other.getPath().data(), other.getPath().size());
+}
+
+DatabaseEntry::DatabaseEntry(const SecureQByteArray &header, int entryId)
 {
     QJsonObject obj = QJsonDocument::fromJson(header).object();
     this->entryId = entryId;
     this->sequence = obj["sequence"].toInt(0);
     this->entryType = obj["entryType"].toInt(0);
-    this->name = obj["name"].toString("").toUtf8();
-    this->path = obj["path"].toString("").toUtf8();
+    this->name = SecureQByteArray(obj["name"].toString("").toUtf8());
+    this->path = SecureQByteArray(obj["path"].toString("").toUtf8());
 }
 
 DatabaseEntry::~DatabaseEntry()
 {
-    Crypto::wipeMemory(this->name.data(), this->name.length());
-    Crypto::wipeMemory(this->path.data(), this->path.length());
+    Crypto::wipeMemory(&this->entryId, sizeof(this->entryId));
+    Crypto::wipeMemory(&this->sequence, sizeof(this->sequence));
+    Crypto::wipeMemory(&this->entryType, sizeof(this->entryType));
 }
 
-QByteArray DatabaseEntry::getHeaderJson() const
+SecureQByteArray DatabaseEntry::getHeaderJson() const
 {
     QJsonObject obj;
     obj["sequence"] = this->sequence;
     obj["entryType"] = this->entryType;
     obj["name"] = this->name.data();
     obj["path"] = this->path.data();
-    return QJsonDocument(obj).toJson(QJsonDocument::JsonFormat::Compact);
+    return SecureQByteArray(QJsonDocument(obj).toJson(QJsonDocument::JsonFormat::Compact));
 }
 
-QByteArray DatabaseEntry::getBodyJson() const { return QByteArray(); }
+SecureQByteArray DatabaseEntry::getBodyJson() const { return SecureQByteArray(); }
 
 int DatabaseEntry::getEntryId() const { return this->entryId; }
 
@@ -41,18 +51,14 @@ int DatabaseEntry::getSequence() const { return this->sequence; }
 
 void DatabaseEntry::setSequence(int newSequence) { this->sequence = newSequence; }
 
-const QByteArray& DatabaseEntry::getPath() const { return this->path; }
+int DatabaseEntry::getEntryType() const { return this->entryType; }
 
-void DatabaseEntry::setPath(const QByteArray& newPath)
-{
-    Crypto::wipeMemory(this->path.data(), this->path.length());
-    this->path = newPath.trimmed();
-}
+void DatabaseEntry::setEntryType(int newEntryType) { this->entryType = newEntryType; }
 
-const QByteArray& DatabaseEntry::getName() const { return this->name; }
+const SecureQByteArray& DatabaseEntry::getPath() const { return this->path; }
 
-void DatabaseEntry::setName(const QByteArray& newName)
-{
-    Crypto::wipeMemory(this->name.data(), this->name.length());
-    this->name = newName.trimmed();
-}
+void DatabaseEntry::setPath(QByteArray&& newPath) { this->path = SecureQByteArray(std::move(newPath)); }
+
+const SecureQByteArray& DatabaseEntry::getName() const { return this->name; }
+
+void DatabaseEntry::setName(QByteArray&& newName) { this->name = SecureQByteArray(std::move(newName)); }

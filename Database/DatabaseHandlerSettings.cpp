@@ -8,7 +8,7 @@ DatabaseHandlerSettings::DatabaseHandlerSettings() {}
 DatabaseHandlerSettings::DatabaseHandlerSettings(const QByteArray& generalSectionJson, const QByteArray& securitySectionJson)
 {
     QJsonObject generalSection = QJsonDocument::fromJson(generalSectionJson).object();
-    this->language = generalSection["language"].toString("").toUtf8();
+    this->language = SecureQByteArray(generalSection["language"].toString("").toUtf8());
 
     QJsonObject securitySection = QJsonDocument::fromJson(securitySectionJson).object();
     this->timeToClearClipboard = securitySection["timeToClearClipboard"].toInt(0);
@@ -19,64 +19,45 @@ DatabaseHandlerSettings::DatabaseHandlerSettings(const QByteArray& generalSectio
 
 DatabaseHandlerSettings::~DatabaseHandlerSettings()
 {
-    Crypto::wipeMemory(this->language.data(), this->language.length());
     Crypto::wipeMemory(&this->timeToClearClipboard, sizeof(this->timeToClearClipboard));
     Crypto::wipeMemory(&this->timeInactiveToBlock, sizeof(this->timeInactiveToBlock));
+    Crypto::wipeMemory(&this->lockWhenMachineBlocked, sizeof(this->lockWhenMachineBlocked));
+    Crypto::wipeMemory(&this->lockWhenMinimizing, sizeof(this->lockWhenMinimizing));
 }
 
-QByteArray DatabaseHandlerSettings::getGeneralJson() const
+SecureQByteArray DatabaseHandlerSettings::getGeneralJson() const
 {
     QJsonObject obj;
     obj["language"] = this->language.data();
-    return QJsonDocument(obj).toJson(QJsonDocument::JsonFormat::Compact);
+    return SecureQByteArray(QJsonDocument(obj).toJson(QJsonDocument::JsonFormat::Compact));
 }
 
-QByteArray DatabaseHandlerSettings::getSecurityJson() const
+SecureQByteArray DatabaseHandlerSettings::getSecurityJson() const
 {
     QJsonObject obj;
     obj["timeToClearClipboard"] = this->timeToClearClipboard;
     obj["timeInactiveToBlock"] = this->timeInactiveToBlock;
     obj["lockWhenMachineBlocked"] = this->lockWhenMachineBlocked;
     obj["lockWhenMinimizing"] = this->lockWhenMinimizing;
-    return QJsonDocument(obj).toJson(QJsonDocument::JsonFormat::Compact);
+    return SecureQByteArray(QJsonDocument(obj).toJson(QJsonDocument::JsonFormat::Compact));
 }
 
-const QByteArray& DatabaseHandlerSettings::getLanguage() const { return this->language; }
+const SecureQByteArray& DatabaseHandlerSettings::getLanguage() const { return this->language; }
 
-void DatabaseHandlerSettings::setLanguage(const QByteArray& newLanguage)
-{
-    Crypto::wipeMemory(this->language.data(), this->language.length());
-    language = newLanguage;
-}
+void DatabaseHandlerSettings::setLanguage(QByteArray&& newLanguage) { this->language = SecureQByteArray(std::move(newLanguage)); }
 
 int DatabaseHandlerSettings::getTimeToClearClipboard() const { return this->timeToClearClipboard; }
 
-void DatabaseHandlerSettings::setTimeToClearClipboard(int newTimeToClearClipboard)
-{
-    Crypto::wipeMemory(&this->timeToClearClipboard, sizeof(this->timeToClearClipboard));
-    this->timeToClearClipboard = newTimeToClearClipboard;
-}
+void DatabaseHandlerSettings::setTimeToClearClipboard(int newTimeToClearClipboard) { this->timeToClearClipboard = newTimeToClearClipboard; }
 
 int DatabaseHandlerSettings::getTimeInactiveToBlock() const { return this->timeInactiveToBlock; }
 
-void DatabaseHandlerSettings::setTimeInactiveToBlock(int newTimeInactiveToBlock)
-{
-    Crypto::wipeMemory(&this->timeInactiveToBlock, sizeof(this->timeInactiveToBlock));
-    this->timeInactiveToBlock = newTimeInactiveToBlock;
-}
+void DatabaseHandlerSettings::setTimeInactiveToBlock(int newTimeInactiveToBlock) { this->timeInactiveToBlock = newTimeInactiveToBlock; }
 
 bool DatabaseHandlerSettings::getLockWhenMachineBlocked() const { return this->lockWhenMachineBlocked; }
 
-void DatabaseHandlerSettings::setLockWhenMachineBlocked(bool newLockWhenMachineBlocked)
-{
-    Crypto::wipeMemory(&this->lockWhenMachineBlocked, sizeof(this->lockWhenMachineBlocked));
-    this->lockWhenMachineBlocked = newLockWhenMachineBlocked;
-}
+void DatabaseHandlerSettings::setLockWhenMachineBlocked(bool newLockWhenMachineBlocked){ this->lockWhenMachineBlocked = newLockWhenMachineBlocked; }
 
 bool DatabaseHandlerSettings::getLockWhenMinimizing() const { return this->lockWhenMinimizing; }
 
-void DatabaseHandlerSettings::setLockWhenMinimizing(bool newLockWhenMinimizing)
-{
-    Crypto::wipeMemory(&this->lockWhenMachineBlocked, sizeof(this->lockWhenMachineBlocked));
-    this->lockWhenMinimizing = newLockWhenMinimizing;
-}
+void DatabaseHandlerSettings::setLockWhenMinimizing(bool newLockWhenMinimizing) { this->lockWhenMinimizing = newLockWhenMinimizing; }

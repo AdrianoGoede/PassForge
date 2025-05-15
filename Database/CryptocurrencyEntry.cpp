@@ -1,69 +1,44 @@
 #include "CryptocurrencyEntry.h"
-#include "../Crypto/Crypto.h"
 #include <QJsonDocument>
 #include <QJsonObject>
 
 CryptocurrencyEntry::CryptocurrencyEntry() : DatabaseEntry() {}
 
-CryptocurrencyEntry::CryptocurrencyEntry(const QByteArray& header, const QByteArray& body) : DatabaseEntry(header) { this->deserializeJson(body); }
+CryptocurrencyEntry::CryptocurrencyEntry(const SecureQByteArray& header, const SecureQByteArray& body) : DatabaseEntry(header) { this->deserializeJson(body); }
 
-CryptocurrencyEntry::CryptocurrencyEntry(const DatabaseEntry &header, const QByteArray &body) : DatabaseEntry(header) { this->deserializeJson(body); }
+CryptocurrencyEntry::CryptocurrencyEntry(const DatabaseEntry &header, const SecureQByteArray &body) : DatabaseEntry(header) { this->deserializeJson(body); }
 
-CryptocurrencyEntry::~CryptocurrencyEntry()
-{
-    Crypto::wipeMemory(this->cryptocurrencyName.data(), this->cryptocurrencyName.length());
-    Crypto::wipeMemory(this->seed.data(), this->seed.length());
-    Crypto::wipeMemory(this->masterPrivateKey.data(), this->masterPrivateKey.length());
-    Crypto::wipeMemory(this->notes.data(), this->notes.length());
-}
-
-QByteArray CryptocurrencyEntry::getBodyJson() const
+SecureQByteArray CryptocurrencyEntry::getBodyJson() const
 {
     QJsonObject obj;
     obj["cryptocurrencyName"] = this->cryptocurrencyName.data();
     obj["seed"] = this->seed.data();
     obj["masterPrivateKey"] = this->masterPrivateKey.data();
     obj["notes"] = this->notes.data();
-    return QJsonDocument(obj).toJson(QJsonDocument::JsonFormat::Compact);
+    return SecureQByteArray(QJsonDocument(obj).toJson(QJsonDocument::JsonFormat::Compact));
 }
 
-const QByteArray& CryptocurrencyEntry::getCryptocurrencyName() const { return this->cryptocurrencyName; }
+const SecureQByteArray& CryptocurrencyEntry::getCryptocurrencyName() const { return this->cryptocurrencyName; }
 
-void CryptocurrencyEntry::setCryptocurrencyName(const QByteArray& newCryptocurrencyName)
-{
-    Crypto::wipeMemory(this->cryptocurrencyName.data(), this->cryptocurrencyName.length());
-    this->cryptocurrencyName = newCryptocurrencyName.trimmed();
-}
+void CryptocurrencyEntry::setCryptocurrencyName(QByteArray& newCryptocurrencyName) { this->cryptocurrencyName = SecureQByteArray(std::move(newCryptocurrencyName)); }
 
-const QByteArray& CryptocurrencyEntry::getSeed() const { return this->seed; }
+const SecureQByteArray& CryptocurrencyEntry::getSeed() const { return this->seed; }
 
-void CryptocurrencyEntry::setSeed(const QByteArray& newSeed)
-{
-    Crypto::wipeMemory(this->seed.data(), this->seed.length());
-    this->seed = newSeed;
-}
+void CryptocurrencyEntry::setSeed(QByteArray& newSeed) { this->seed = SecureQByteArray(std::move(newSeed)); }
 
-const QByteArray& CryptocurrencyEntry::getMasterPrivateKey() const { return this->masterPrivateKey; }
+const SecureQByteArray& CryptocurrencyEntry::getMasterPrivateKey() const { return this->masterPrivateKey; }
 
-void CryptocurrencyEntry::setMasterPrivateKey(const QByteArray& newMasterPrivateKey)
-{
-    Crypto::wipeMemory(this->masterPrivateKey.data(), this->masterPrivateKey.length());
-    this->masterPrivateKey = newMasterPrivateKey;
-}
+void CryptocurrencyEntry::setMasterPrivateKey(QByteArray& newMasterPrivateKey) { this->masterPrivateKey = SecureQByteArray(std::move(newMasterPrivateKey)); }
 
-const QByteArray& CryptocurrencyEntry::getNotes() const { return this->notes; }
+const SecureQByteArray& CryptocurrencyEntry::getNotes() const { return this->notes; }
 
-void CryptocurrencyEntry::setNotes(const QByteArray& newNotes)
-{
-    Crypto::wipeMemory(this->notes.data(), this->notes.length());
-    this->notes = newNotes;
-}
+void CryptocurrencyEntry::setNotes(QByteArray& newNotes) { this->notes = SecureQByteArray(std::move(newNotes)); }
 
 void CryptocurrencyEntry::deserializeJson(const QByteArray &body)
 {
     QJsonObject obj = QJsonDocument::fromJson(body).object();
-    this->cryptocurrencyName = obj["cryptocurrencyName"].toString("").toUtf8();
-    this->seed = obj["seed"].toString("").toUtf8();
-    this->masterPrivateKey = obj["masterPrivateKey"].toString("").toUtf8();
-    this->notes = obj["notes"].toString("").toUtf8();
+    this->cryptocurrencyName = SecureQByteArray(obj["cryptocurrencyName"].toString("").toUtf8());
+    this->seed = SecureQByteArray(obj["seed"].toString("").toUtf8());
+    this->masterPrivateKey = SecureQByteArray(obj["masterPrivateKey"].toString("").toUtf8());
+    this->notes = SecureQByteArray(obj["notes"].toString("").toUtf8());
 }

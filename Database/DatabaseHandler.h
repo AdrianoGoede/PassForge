@@ -2,6 +2,7 @@
 #define DATABASEHANDLER_H
 
 #include "DatabaseHandlerSettings.h"
+#include "../Crypto/SecureQByteArray.h"
 #include "DatabaseEntry.h"
 #include "CredentialEntry.h"
 #include "ApiKeyEntry.h"
@@ -24,7 +25,7 @@ struct DatabaseHandlerBasicData
 class DatabaseHandler
 {
 public:
-    DatabaseHandler(const QString& filePath, const QByteArray& password, const DatabaseHandlerBasicData* basicData = nullptr);
+    DatabaseHandler(const QString& filePath, const SecureQByteArray& password, const DatabaseHandlerBasicData* basicData = nullptr);
     ~DatabaseHandler();
     void saveDatabaseEntry(const DatabaseEntry& entry);
     QVector<DatabaseEntry> getEntryHeaders() const;
@@ -36,7 +37,7 @@ private:
     sqlite3* database = nullptr;
     DatabaseHandlerBasicData dbBasicData;
     DatabaseHandlerSettings dbSettings;
-    QByteArray masterEncryptionKey;
+    SecureQByteArray masterEncryptionKey;
 
     void setNewDatabaseStructure();
     void createBasicInfoStructure();
@@ -44,7 +45,7 @@ private:
     void createSecretsStructure();
     void fetchDatabaseBasicData();
     void fetchDatabaseSettingsData();
-    QByteArray getDatabaseEntryBody(int entryId) const;
+    SecureQByteArray getDatabaseEntryBody(int entryId) const;
     QString getCipherSetting(const QString& algorithm, size_t keyLength = 0);
 };
 

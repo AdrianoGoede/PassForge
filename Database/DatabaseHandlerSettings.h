@@ -1,6 +1,7 @@
 #ifndef DATABASEHANDLERSETTINGS_H
 #define DATABASEHANDLERSETTINGS_H
 
+#include "../Crypto/SecureQByteArray.h"
 #include <QByteArray>
 
 class DatabaseHandlerSettings
@@ -9,11 +10,11 @@ public:
     DatabaseHandlerSettings();
     DatabaseHandlerSettings(const QByteArray& generalSectionJson, const QByteArray& securitySectionJson);
     ~DatabaseHandlerSettings();
-    QByteArray getGeneralJson() const;
-    QByteArray getSecurityJson() const;
+    SecureQByteArray getGeneralJson() const;
+    SecureQByteArray getSecurityJson() const;
 
-    const QByteArray& getLanguage() const;
-    void setLanguage(const QByteArray& newLanguage);
+    const SecureQByteArray& getLanguage() const;
+    void setLanguage(QByteArray&& newLanguage);
 
     int getTimeToClearClipboard() const;
     void setTimeToClearClipboard(int newTimeToClearClipboard);
@@ -29,7 +30,7 @@ public:
 
 private:
     // General
-    QByteArray language;
+    SecureQByteArray language;
     // Security
     int timeToClearClipboard, timeInactiveToBlock;
     bool lockWhenMachineBlocked, lockWhenMinimizing;

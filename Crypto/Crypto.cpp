@@ -22,31 +22,31 @@ void Crypto::getRandomUnsignedIntegers(uint32_t *buffer, size_t count, uint32_t 
     }
 }
 
-QByteArray Crypto::generateRandomKey(size_t keyLength)
+SecureQByteArray Crypto::generateRandomKey(size_t keyLength)
 {
     Botan::AutoSeeded_RNG rng;
     Botan::secure_vector<uint8_t> key = rng.random_vec(keyLength);
-    return QByteArray(reinterpret_cast<const char*>(key.data()), static_cast<int>(key.size()));
+    return SecureQByteArray(reinterpret_cast<const char*>(key.data()), static_cast<int>(key.size()));
 }
 
-QByteArray Crypto::getHash(const QByteArray& plainText, const QString& algorithm)
+SecureQByteArray Crypto::getHash(const SecureQByteArray& plainText, const QString& algorithm)
 {
     std::unique_ptr<Botan::HashFunction> hashFunction = Botan::HashFunction::create(algorithm.toStdString());
     if (!hashFunction) throw std::runtime_error("Algorithm not supported");
     Botan::secure_vector<uint8_t> bytes(plainText.cbegin(), plainText.cend());
     hashFunction->update(bytes);
     bytes = hashFunction->final();
-    return QByteArray(reinterpret_cast<const char*>(bytes.data()), static_cast<int>(bytes.size()));
+    return SecureQByteArray(reinterpret_cast<const char*>(bytes.data()), static_cast<int>(bytes.size()));
 }
 
-QByteArray Crypto::generateSalt(size_t length)
+SecureQByteArray Crypto::generateSalt(size_t length)
 {
     Botan::AutoSeeded_RNG rng;
     Botan::secure_vector<uint8_t> salt = rng.random_vec(length / 8);
-    return QByteArray(reinterpret_cast<const char*>(salt.data()), static_cast<int>(salt.size()));
+    return SecureQByteArray(reinterpret_cast<const char*>(salt.data()), static_cast<int>(salt.size()));
 }
 
-QByteArray Crypto::deriveKey(const QByteArray &password, const QByteArray &salt, size_t keyLength, size_t iterations, const QString &algorithm)
+SecureQByteArray Crypto::deriveKey(const SecureQByteArray& password, const SecureQByteArray& salt, size_t keyLength, size_t iterations, const QString &algorithm)
 {
     if (algorithm == "PBKDF2")
         return deriveKeyPbkdf2(password, salt, keyLength, iterations);
@@ -57,21 +57,21 @@ QByteArray Crypto::deriveKey(const QByteArray &password, const QByteArray &salt,
     throw std::runtime_error("Key derivation function not supported");
 }
 
-QByteArray Crypto::encrypt(const QByteArray& plaintext, const QByteArray& key, const QString& cipherSetting)
+SecureQByteArray Crypto::encrypt(const SecureQByteArray& plaintext, const SecureQByteArray& key, const QString& cipherSetting)
 {
     if (QStringList({ CIPHER_SETTINGS_CHACHA20 }).contains(cipherSetting))
         return encryptWithStreamCipher(plaintext, key, cipherSetting);
     return encryptWithBlockCipher(plaintext, key, cipherSetting);
 }
 
-QByteArray Crypto::decrypt(const QByteArray &ciphertext, const QByteArray &key, const QString &cipherSetting)
+SecureQByteArray Crypto::decrypt(const SecureQByteArray& ciphertext, const SecureQByteArray& key, const QString& cipherSetting)
 {
     if (QStringList({ CIPHER_SETTINGS_CHACHA20 }).contains(cipherSetting))
         return decryptWithStreamCipher(ciphertext, key, cipherSetting);
     return decryptWithBlockCipher(ciphertext, key, cipherSetting);
 }
 
-QByteArray Crypto::deriveKeyPbkdf2(const QByteArray& password, const QByteArray& salt, size_t keyLength, size_t iterations)
+SecureQByteArray Crypto::deriveKeyPbkdf2(const SecureQByteArray& password, const SecureQByteArray& salt, size_t keyLength, size_t iterations)
 {
     std::unique_ptr<Botan::PBKDF> derivationFunction = Botan::PBKDF::create("PBKDF2(SHA-256)");
     if (!derivationFunction) throw std::runtime_error("PBKDF2 not available");
@@ -79,19 +79,19 @@ QByteArray Crypto::deriveKeyPbkdf2(const QByteArray& password, const QByteArray&
     std::vector<uint8_t> saltVec(salt.cbegin(), salt.cend());
     Botan::OctetString key = derivationFunction->derive_key(keyLength, passwd, saltVec.data(), saltVec.size(), iterations);
     wipeMemory(passwd.data(), passwd.length());
-    return QByteArray(reinterpret_cast<const char*>(key.begin()), static_cast<int>(key.length()));
+    return SecureQByteArray(reinterpret_cast<const char*>(key.begin()), static_cast<int>(key.length()));
 }
 
-QByteArray Crypto::deriveKeyScrypt(const QByteArray& password, const QByteArray &salt, size_t keyLength, size_t iterations)
+SecureQByteArray Crypto::deriveKeyScrypt(const SecureQByteArray& password, const SecureQByteArray& salt, size_t keyLength, size_t iterations)
 {
     size_t cost_param = (1 << (KEY_DERIVATION_SCRYPT_COST_PARAM + iterations));
     Botan::Scrypt derivationFunction(cost_param, KEY_DERIVATION_SCRYPT_BLOCK_SIZE, KEY_DERIVATION_SCRYPT_PARALLELIZATION);
     Botan::secure_vector<uint8_t> buffer(keyLength);
     derivationFunction.derive_key(buffer.data(), keyLength, password, password.length(), reinterpret_cast<const uint8_t*>(salt.data()), salt.length());
-    return QByteArray(reinterpret_cast<const char*>(buffer.data()), static_cast<int>(buffer.size()));
+    return SecureQByteArray(reinterpret_cast<const char*>(buffer.data()), static_cast<int>(buffer.size()));
 }
 
-QByteArray Crypto::deriveKeyArgon2id(const QByteArray& password, const QByteArray& salt, size_t keyLength, size_t iterations)
+SecureQByteArray Crypto::deriveKeyArgon2id(const SecureQByteArray& password, const SecureQByteArray& salt, size_t keyLength, size_t iterations)
 {
     Botan::secure_vector<uint8_t> buffer(keyLength);
     Botan::argon2(
@@ -105,10 +105,10 @@ QByteArray Crypto::deriveKeyArgon2id(const QByteArray& password, const QByteArra
         KEY_DERIVATION_ARGON2_MEMORY,
         iterations
         );
-    return QByteArray(reinterpret_cast<const char*>(buffer.data()), static_cast<int>(buffer.size()));
+    return SecureQByteArray(reinterpret_cast<const char*>(buffer.data()), static_cast<int>(buffer.size()));
 }
 
-QByteArray Crypto::encryptWithBlockCipher(const QByteArray& plaintext, const QByteArray& key, const QString& cipherSetting)
+SecureQByteArray Crypto::encryptWithBlockCipher(const SecureQByteArray& plaintext, const SecureQByteArray& key, const QString& cipherSetting)
 {
     size_t keyLength = (key.length() * 8);
     if (!QStringList({ SUPPORTED_BLOCK_CYPHER_KEY_SETTINGS }).contains(std::to_string(keyLength)))
@@ -124,13 +124,14 @@ QByteArray Crypto::encryptWithBlockCipher(const QByteArray& plaintext, const QBy
     try {
         cipher->start(initializationVector);
         cipher->finish(buffer);
-        return QByteArray(reinterpret_cast<char*>(initializationVector.data()), static_cast<int>(initializationVector.size()))
-            .append(QByteArray(reinterpret_cast<char*>(buffer.data()), static_cast<int>(buffer.size())));
+        SecureQByteArray result(reinterpret_cast<char*>(initializationVector.data()), static_cast<int>(initializationVector.size()));
+        result.push_back(SecureQByteArray(reinterpret_cast<char*>(buffer.data()), static_cast<int>(buffer.size())));
+        return result;
     }
     catch (const std::exception& ex) { throw std::runtime_error("Encryption failed - " + std::string(ex.what())); }
 }
 
-QByteArray Crypto::decryptWithBlockCipher(const QByteArray& ciphertext, const QByteArray& key, const QString& cipherSetting)
+SecureQByteArray Crypto::decryptWithBlockCipher(const SecureQByteArray& ciphertext, const SecureQByteArray& key, const QString& cipherSetting)
 {
     size_t keyLength = (key.length() * 8);
     if (!QStringList({SUPPORTED_BLOCK_CYPHER_KEY_SETTINGS}).contains(QString::number(keyLength)))
@@ -145,12 +146,12 @@ QByteArray Crypto::decryptWithBlockCipher(const QByteArray& ciphertext, const QB
     try {
         cipher->start(initializationVector);
         cipher->finish(buffer);
-        return QByteArray(reinterpret_cast<char*>(buffer.data()), static_cast<int>(buffer.size()));
+        return SecureQByteArray(reinterpret_cast<char*>(buffer.data()), static_cast<int>(buffer.size()));
     }
     catch (const std::exception& ex) { throw std::runtime_error("Decryption failed - " + std::string(ex.what())); }
 }
 
-QByteArray Crypto::encryptWithStreamCipher(const QByteArray& plaintext, const QByteArray& key, const QString& cipherSetting)
+SecureQByteArray Crypto::encryptWithStreamCipher(const SecureQByteArray& plaintext, const SecureQByteArray& key, const QString& cipherSetting)
 {
     if (key.length() != 32) throw std::runtime_error("Key must be 256 bits long");
     std::unique_ptr<Botan::StreamCipher> cipher = Botan::StreamCipher::create(cipherSetting.toStdString());
@@ -164,13 +165,14 @@ QByteArray Crypto::encryptWithStreamCipher(const QByteArray& plaintext, const QB
     try {
         cipher->set_iv(initializationVector.data(), initializationVector.size());
         cipher->encrypt(buffer);
-        return QByteArray(reinterpret_cast<char*>(initializationVector.data()), static_cast<int>(initializationVector.size()))
-            .append(QByteArray(reinterpret_cast<char*>(buffer.data()), static_cast<int>(buffer.size())));
+        SecureQByteArray result(reinterpret_cast<char*>(initializationVector.data()), static_cast<int>(initializationVector.size()));
+        result.push_back(SecureQByteArray(reinterpret_cast<char*>(buffer.data()), static_cast<int>(buffer.size())));
+        return result;
     }
     catch (const std::exception& ex) { throw std::runtime_error("Encryption failed - " + std::string(ex.what())); }
 }
 
-QByteArray Crypto::decryptWithStreamCipher(const QByteArray& ciphertext, const QByteArray& key, const QString& cipherSetting)
+SecureQByteArray Crypto::decryptWithStreamCipher(const SecureQByteArray& ciphertext, const SecureQByteArray& key, const QString& cipherSetting)
 {
     if (key.length() != 32) throw std::runtime_error("Key must be 256 bits long");
     std::unique_ptr<Botan::StreamCipher> cipher = Botan::StreamCipher::create(cipherSetting.toStdString());
@@ -183,7 +185,7 @@ QByteArray Crypto::decryptWithStreamCipher(const QByteArray& ciphertext, const Q
     try {
         cipher->set_iv(initializationVector.data(), initializationVector.size());
         cipher->encrypt(buffer);
-        return QByteArray(reinterpret_cast<char*>(buffer.data()), static_cast<int>(buffer.size()));
+        return SecureQByteArray(reinterpret_cast<char*>(buffer.data()), static_cast<int>(buffer.size()));
     }
     catch (const std::exception& ex) { throw std::runtime_error("Decryption failed - " + std::string(ex.what())); }
 }

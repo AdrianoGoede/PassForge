@@ -1,17 +1,19 @@
 #ifndef DATABASEENTRY_H
 #define DATABASEENTRY_H
 
+#include "../Crypto/SecureQByteArray.h"
 #include <QByteArray>
 
 class DatabaseEntry
 {
 public:
     DatabaseEntry();
-    DatabaseEntry(const QByteArray &header, int entryId = 0);
+    DatabaseEntry(const DatabaseEntry& other);
+    DatabaseEntry(const SecureQByteArray& header, int entryId = 0);
     ~DatabaseEntry();
 
-    QByteArray getHeaderJson() const;
-    virtual QByteArray getBodyJson() const;
+    SecureQByteArray getHeaderJson() const;
+    virtual SecureQByteArray getBodyJson() const;
 
     int getEntryId() const;
     void setEntryId(int newEntryId);
@@ -19,15 +21,18 @@ public:
     int getSequence() const;
     void setSequence(int newSequence);
 
-    const QByteArray& getPath() const;
-    void setPath(const QByteArray& newPath);
+    const SecureQByteArray& getPath() const;
+    void setPath(QByteArray&& newPath);
 
-    const QByteArray& getName() const;
-    void setName(const QByteArray& newName);
+    const SecureQByteArray& getName() const;
+    void setName(QByteArray&& newName);
+
+    int getEntryType() const;
+    void setEntryType(int newEntryType);
 
 protected:
     int entryId, sequence, entryType;
-    QByteArray name, path;
+    SecureQByteArray name, path;
 };
 
 #endif // DATABASEENTRY_H

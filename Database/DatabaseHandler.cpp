@@ -6,6 +6,7 @@
 #include <stdexcept>
 #include <sqlite3.h>
 #include <QFile>
+#include <QSet>
 
 DatabaseHandler::DatabaseHandler(const QString& filePath, const SecureQByteArray& password, const DatabaseHandlerBasicData* options)
 {
@@ -40,26 +41,26 @@ DatabaseHandler::~DatabaseHandler()
 void DatabaseHandler::saveDatabaseEntry(const DatabaseEntry& entry)
 {
     SecureQByteArray randomKey = Crypto::generateRandomKey(this->dbBasicData.EncryptionKeyLength / 8);
-    SecureQByteArray header = entry.getHeaderJson(), body = entry.getBodyJson();
-
-    QByteArray encryptedRandomKey = Crypto::encrypt(randomKey, this->masterEncryptionKey, this->dbBasicData.EncryptionAlgorithm);
-    QByteArray encryptedHeader = Crypto::encrypt(header, randomKey, this->dbBasicData.EncryptionAlgorithm);
-    QByteArray encryptedBody = Crypto::encrypt(body, randomKey, this->dbBasicData.EncryptionAlgorithm);
+    SecureQByteArray path = Crypto::encrypt(entry.getPath(), randomKey, this->dbBasicData.EncryptionAlgorithm);
+    SecureQByteArray header = Crypto::encrypt(entry.getHeaderJson(), randomKey, this->dbBasicData.EncryptionAlgorithm);
+    SecureQByteArray body = Crypto::encrypt(entry.getBodyJson(), randomKey, this->dbBasicData.EncryptionAlgorithm);
+    randomKey = Crypto::encrypt(randomKey, this->masterEncryptionKey, this->dbBasicData.EncryptionAlgorithm);
 
     const std::string sql = (entry.getEntryId() <= 0
-                             ? "INSERT INTO secret_data (entry_key,header_data,body_data) VALUES (?,?,?)"
-                             : "UPDATE secret_data SET entry_key = ?,header_data = ?,body_data = ? WHERE entry_id = ?");
+                             ? "INSERT INTO secret_data (entry_key,path,header_data,body_data) VALUES (?,?,?,?)"
+                             : "UPDATE secret_data SET entry_key = ?, path = ?,header_data = ?,body_data = ? WHERE entry_id = ?");
 
     sqlite3_stmt* statement;
     try {
         if (sqlite3_prepare_v2(this->database, sql.data(), -1, &statement, nullptr) != SQLITE_OK)
             throw std::runtime_error(sqlite3_errmsg(this->database));
 
-        sqlite3_bind_blob(statement, 1, encryptedRandomKey.data(), encryptedRandomKey.length(), SQLITE_TRANSIENT);
-        sqlite3_bind_blob(statement, 2, encryptedHeader.data(), encryptedHeader.length(), SQLITE_TRANSIENT);
-        sqlite3_bind_blob(statement, 3, encryptedBody.data(), encryptedBody.length(), SQLITE_TRANSIENT);
+        sqlite3_bind_blob(statement, 1, randomKey.data(), randomKey.length(), SQLITE_TRANSIENT);
+        sqlite3_bind_blob(statement, 2, path.data(), path.length(), SQLITE_TRANSIENT);
+        sqlite3_bind_blob(statement, 3, header.data(), header.length(), SQLITE_TRANSIENT);
+        sqlite3_bind_blob(statement, 4, body.data(), body.length(), SQLITE_TRANSIENT);
         if (entry.getEntryId() > 0)
-            sqlite3_bind_int(statement, 4, entry.getEntryId());
+            sqlite3_bind_int(statement, 5, entry.getEntryId());
 
         if (sqlite3_step(statement) != SQLITE_DONE) throw std::runtime_error(sqlite3_errmsg(this->database));
     }
@@ -71,10 +72,41 @@ void DatabaseHandler::saveDatabaseEntry(const DatabaseEntry& entry)
     if (sqlite3_finalize(statement) != SQLITE_OK) throw std::runtime_error(sqlite3_errmsg(this->database));
 }
 
-QVector<DatabaseEntry> DatabaseHandler::getEntryHeaders() const
+QVector<SecureQByteArray> DatabaseHandler::getEntryPaths() const
 {
     sqlite3_stmt* statement;
-    const char sql[] = "SELECT entry_id,entry_key,header_data FROM secret_data;";
+    const char sql[] = "SELECT entry_key,path FROM secret_data;";
+    if (sqlite3_prepare_v2(this->database, sql, -1, &statement, nullptr) != SQLITE_OK)
+        throw std::runtime_error(sqlite3_errmsg(this->database));
+
+    QSet<SecureQByteArray> results;
+    try {
+        while (sqlite3_step(statement) == SQLITE_ROW) {
+            SecureQByteArray entryKey = Crypto::decrypt(
+                SecureQByteArray(reinterpret_cast<const char*>(sqlite3_column_blob(statement, 0)), sqlite3_column_bytes(statement, 0)),
+                this->masterEncryptionKey,
+                this->dbBasicData.EncryptionAlgorithm
+            );
+            results.insert(Crypto::decrypt(
+                SecureQByteArray(reinterpret_cast<const char*>(sqlite3_column_blob(statement, 1)), sqlite3_column_bytes(statement, 1)),
+                entryKey,
+                this->dbBasicData.EncryptionAlgorithm
+            ));
+        }
+        sqlite3_finalize(statement);
+    }
+    catch (...) {
+        sqlite3_finalize(statement);
+        throw;
+    }
+
+    return QVector<SecureQByteArray>(results.cbegin(), results.cend());
+}
+
+QVector<DatabaseEntry> DatabaseHandler::getEntryHeaders(const SecureQByteArray& path) const
+{
+    sqlite3_stmt* statement;
+    const char sql[] = "SELECT entry_id,entry_key,path,header_data FROM secret_data;";
     if (sqlite3_prepare_v2(this->database, sql, -1, &statement, nullptr) != SQLITE_OK)
         throw std::runtime_error(sqlite3_errmsg(this->database));
 
@@ -87,8 +119,15 @@ QVector<DatabaseEntry> DatabaseHandler::getEntryHeaders() const
                 this->masterEncryptionKey,
                 this->dbBasicData.EncryptionAlgorithm
             );
-            SecureQByteArray header = Crypto::decrypt(
+            SecureQByteArray entryPath = Crypto::decrypt(
                 SecureQByteArray(reinterpret_cast<const char*>(sqlite3_column_blob(statement, 2)), sqlite3_column_bytes(statement, 2)),
+                entryKey,
+                this->dbBasicData.EncryptionAlgorithm
+            );
+            if (entryPath != path) continue;
+
+            SecureQByteArray header = Crypto::decrypt(
+                SecureQByteArray(reinterpret_cast<const char*>(sqlite3_column_blob(statement, 3)), sqlite3_column_bytes(statement, 3)),
                 entryKey,
                 this->dbBasicData.EncryptionAlgorithm
             );
@@ -184,7 +223,7 @@ void DatabaseHandler::createSettingsStructure()
 
 void DatabaseHandler::createSecretsStructure()
 {
-    const char sql[] = "CREATE TABLE secret_data ( entry_id INTEGER NOT NULL PRIMARY KEY, entry_key BLOB NOT NULL, header_data BLOB NOT NULL, body_data BLOB NOT NULL );";
+    const char sql[] = "CREATE TABLE secret_data ( entry_id INTEGER NOT NULL PRIMARY KEY, entry_key BLOB NOT NULL, path BLOB NOT NULL, header_data BLOB NOT NULL, body_data BLOB NOT NULL );";
     if (sqlite3_exec(this->database, sql, nullptr, nullptr, nullptr) != SQLITE_OK)
         throw std::runtime_error(sqlite3_errmsg(this->database));
 }
@@ -284,10 +323,10 @@ SecureQByteArray DatabaseHandler::getDatabaseEntryBody(int entryId) const
 
 QString DatabaseHandler::getCipherSetting(const QString& algorithm, size_t keyLength)
 {
-    if (algorithm.trimmed().compare("AES", Qt::CaseSensitivity::CaseInsensitive) == 0)      return QString(CIPHER_SETTINGS_AES).arg(keyLength);
-    if (algorithm.trimmed().compare("Serpent", Qt::CaseSensitivity::CaseInsensitive) == 0)  return QString(CIPHER_SETTINGS_SERPENT).arg(keyLength);
-    if (algorithm.trimmed().compare("Twofish", Qt::CaseSensitivity::CaseInsensitive) == 0)  return QString(CIPHER_SETTINGS_TWOFISH).arg(keyLength);
-    if (algorithm.trimmed().compare("Camellia", Qt::CaseSensitivity::CaseInsensitive) == 0) return QString(CIPHER_SETTINGS_CAMELLIA).arg(keyLength);
-    if (algorithm.trimmed().compare("ChaCha20", Qt::CaseSensitivity::CaseInsensitive) == 0) return QString(CIPHER_SETTINGS_CHACHA20).arg(keyLength);
+    if (algorithm.trimmed().compare("AES", Qt::CaseSensitivity::CaseInsensitive) == 0) return QString(CIPHER_SETTINGS_AES).arg(keyLength);
+    if (algorithm.trimmed().compare("Serpent", Qt::CaseSensitivity::CaseInsensitive) == 0)  return QString(CIPHER_SETTINGS_SERPENT);
+    if (algorithm.trimmed().compare("Twofish", Qt::CaseSensitivity::CaseInsensitive) == 0)  return QString(CIPHER_SETTINGS_TWOFISH);
+    if (algorithm.trimmed().compare("Camellia", Qt::CaseSensitivity::CaseInsensitive) == 0) return QString(CIPHER_SETTINGS_CAMELLIA);
+    if (algorithm.trimmed().compare("ChaCha20", Qt::CaseSensitivity::CaseInsensitive) == 0) return QString(CIPHER_SETTINGS_CHACHA20);
     throw std::runtime_error("Algorithm not supported");
 }

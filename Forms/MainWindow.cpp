@@ -5,11 +5,14 @@
 #include "PasswordGenerator.h"
 #include "ApiKeyEntryEditor.h"
 #include "../Configs/Configs.h"
+#include "Models/SecureTreeModel.h"
+#include "Models/SecureDatabaseEntryModel.h"
 #include <QStandardItemModel>
 #include <QInputDialog>
 #include <QMessageBox>
 #include <QFileDialog>
 #include <QString>
+#include <QVector>
 
 MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWindow)
 {
@@ -27,6 +30,7 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWi
     connect(ui->ActionDatabaseSettings, &QAction::triggered, this, &MainWindow::OpenDatabaseSettings);
     connect(ui->ActionToolsPasswordGenerator, &QAction::triggered, this, &MainWindow::OpenPasswordGenerator);
     connect(ui->ActionApplicationQuit, &QAction::triggered, this, &MainWindow::QuitApplication);
+    connect(ui->DirectoryStructureTreeView, &QAbstractItemView::clicked, this, &MainWindow::LoadDatabaseEntries);
 }
 
 MainWindow::~MainWindow() { delete ui; }
@@ -38,7 +42,7 @@ void MainWindow::CreateNewDatabase()
         if (creator.exec() != QDialog::Accepted) return;
 
         this->databaseHandler.reset(creator.getDatabaseHandler());
-        this->loadDatabase();
+        this->LoadDirectoryStructure();
     }
     catch (const std::runtime_error& error) { QMessageBox::critical(this, "Error", error.what()); }
 }
@@ -55,7 +59,7 @@ void MainWindow::OpenExistingDatabase()
         if (password.isEmpty()) throw std::runtime_error("Database password cannot be empty");
 
         this->databaseHandler.reset(new DatabaseHandler(dbPath, password));
-        this->loadDatabase();
+        this->LoadDirectoryStructure();
     }
     catch (const std::runtime_error& error) { QMessageBox::critical(this, "Error", error.what()); }
 }
@@ -83,7 +87,7 @@ void MainWindow::OpenNewApiKeyWindow()
         ApiKeyEntry dbEntry;
         if (ApiKeyEntryEditor(this, &dbEntry).exec() == QDialog::Accepted) {
             this->databaseHandler->saveDatabaseEntry(dbEntry);
-            this->loadDatabase();
+            this->LoadDirectoryStructure();
         }
     }
     catch (const std::runtime_error& error) { QMessageBox::critical(this, "Error", error.what()); }
@@ -94,29 +98,56 @@ void MainWindow::OpenNewCryptocurrency()
 
 }
 
-void MainWindow::QuitApplication() { QApplication::closeAllWindows(); }
-
-void MainWindow::loadDatabase()
+void MainWindow::LoadDatabaseEntries(const QModelIndex& index)
 {
-    QStandardItemModel* directoryTreeModel = new QStandardItemModel(this);
-    ui->DirectoryStructureTreeView->setModel(directoryTreeModel);
-    QStandardItem* currentNode = new QStandardItem("Root");
-    directoryTreeModel->invisibleRootItem()->appendRow(currentNode);
-
-    if (!this->databaseHandler) return;
-    for (const DatabaseEntry& dbEntry : this->databaseHandler->getEntryHeaders()) {
-        currentNode = directoryTreeModel->invisibleRootItem()->child(0);
-        for (const QByteArray& directoryPart : dbEntry.getPath().split('/'))
-            if (!directoryPart.isEmpty())
-                currentNode = this->addDirectoryEntry(currentNode, directoryPart.trimmed());
-    }
+    SecureDatabaseEntryListModel* entryListModel = new SecureDatabaseEntryListModel(this);
+    ui->EntryListView->setModel(entryListModel);
+    SecureQByteArray selectedPath = GetSelectedPath(index);
+    for (const DatabaseEntry& entry : this->databaseHandler->getEntryHeaders(selectedPath))
+        entryListModel->addItem(QModelIndex(), entry);
 }
 
-QStandardItem* MainWindow::addDirectoryEntry(QStandardItem* node, const QByteArray& folderName)
+void MainWindow::QuitApplication() { QApplication::closeAllWindows(); }
+
+void MainWindow::LoadDirectoryStructure()
 {
-    for (size_t i = 0; i < node->rowCount(); i++)
-        if (!node || node->child(i)->text().toUtf8() == folderName) return node->child(i);
-    QStandardItem* child = new QStandardItem(folderName);
-    node->appendRow(child);
-    return child;
+    try {
+        SecureTreeModel* directoryTreeModel = new SecureTreeModel(this);
+        ui->DirectoryStructureTreeView->setModel(directoryTreeModel);
+        if (!this->databaseHandler) return;
+
+        for (const SecureQByteArray& entryPath : this->databaseHandler->getEntryPaths()) {
+            QModelIndex parentIndex;
+
+            for (SecureQByteArray& directoryPart : entryPath.secureSplit('/')) {
+                if (directoryPart.isEmpty()) directoryPart = "Root";
+
+                bool found = false;
+                int rowCount = directoryTreeModel->rowCount();
+
+                for (int row = 0; row < rowCount; row++) {
+                    QModelIndex child = directoryTreeModel->index(row, 0, parentIndex);
+                    if (directoryTreeModel->data(child).toByteArray() == directoryPart) {
+                        parentIndex = child;
+                        found = true;
+                        break;
+                    }
+                }
+
+                if (found) continue;
+                directoryTreeModel->addItem(parentIndex, SecureQByteArray(directoryPart.data()));
+                parentIndex = directoryTreeModel->index(directoryTreeModel->rowCount(parentIndex) - 1, 0, parentIndex);
+            }
+        }
+    }
+    catch (const std::runtime_error& error) { QMessageBox::critical(this, "Error", error.what()); }
+}
+
+SecureQByteArray MainWindow::GetSelectedPath(const QModelIndex& index) const
+{
+    if (!index.isValid()) return SecureQByteArray();
+    const QModelIndex parent = index.parent();
+    if (parent.isValid())
+        return (this->GetSelectedPath(parent) + "/" + SecureQByteArray(index.data().toByteArray()));
+    return SecureQByteArray();
 }

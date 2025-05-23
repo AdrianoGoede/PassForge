@@ -62,6 +62,10 @@ if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
     Forms/ApiKeyEntryEditor.ui
     Crypto/SecureQByteArray.h
     Crypto/SecureQByteArray.cpp
+    Forms/Models/SecureTreeModel.h
+    Forms/Models/SecureTreeModel.cpp
+    Forms/Models/SecureDatabaseEntryModel.h
+    Forms/Models/SecureDatabaseEntryModel.cpp
 )
 # Define target properties for Android with Qt 6 as:
 #    set_property(TARGET PassForge APPEND PROPERTY QT_ANDROID_PACKAGE_SOURCE_DIR

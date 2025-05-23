@@ -27,14 +27,15 @@ private slots:
     void OpenNewCredentialWindow();
     void OpenNewApiKeyWindow();
     void OpenNewCryptocurrency();
+    void LoadDatabaseEntries(const QModelIndex& index);
     void QuitApplication();
 
 private:
     Ui::MainWindow *ui;
     std::unique_ptr<DatabaseHandler> databaseHandler = nullptr;
 
-    void loadDatabase();
-    QStandardItem* addDirectoryEntry(QStandardItem* node, const QByteArray& folderName);
+    void LoadDirectoryStructure();
+    SecureQByteArray GetSelectedPath(const QModelIndex& index) const;
 };
 
 #endif // MAINWINDOW_H

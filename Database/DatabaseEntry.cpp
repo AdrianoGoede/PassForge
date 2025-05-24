@@ -3,12 +3,11 @@
 #include <QJsonDocument>
 #include <QJsonObject>
 
-DatabaseEntry::DatabaseEntry() { }
+DatabaseEntry::DatabaseEntry(int type) : entryId(0), entryType(type) { }
 
 DatabaseEntry::DatabaseEntry(const DatabaseEntry& other)
 {
     this->entryId = other.getEntryId();
-    this->sequence = other.getSequence();
     this->entryType = other.getEntryType();
     this->name = SecureQByteArray(other.getName().data(), other.getName().size());
     this->path = SecureQByteArray(other.getPath().data(), other.getPath().size());
@@ -18,7 +17,6 @@ DatabaseEntry::DatabaseEntry(const SecureQByteArray &header, int entryId)
 {
     QJsonObject obj = QJsonDocument::fromJson(header).object();
     this->entryId = entryId;
-    this->sequence = obj["sequence"].toInt(0);
     this->entryType = obj["entryType"].toInt(0);
     this->name = SecureQByteArray(obj["name"].toString("").toUtf8());
     this->path = SecureQByteArray(obj["path"].toString("").toUtf8());
@@ -27,14 +25,12 @@ DatabaseEntry::DatabaseEntry(const SecureQByteArray &header, int entryId)
 DatabaseEntry::~DatabaseEntry()
 {
     Crypto::wipeMemory(&this->entryId, sizeof(this->entryId));
-    Crypto::wipeMemory(&this->sequence, sizeof(this->sequence));
     Crypto::wipeMemory(&this->entryType, sizeof(this->entryType));
 }
 
 SecureQByteArray DatabaseEntry::getHeaderJson() const
 {
     QJsonObject obj;
-    obj["sequence"] = this->sequence;
     obj["entryType"] = this->entryType;
     obj["name"] = this->name.data();
     obj["path"] = this->path.data();
@@ -46,10 +42,6 @@ SecureQByteArray DatabaseEntry::getBodyJson() const { return SecureQByteArray();
 int DatabaseEntry::getEntryId() const { return this->entryId; }
 
 void DatabaseEntry::setEntryId(int newEntryId) { this->entryId = newEntryId; }
-
-int DatabaseEntry::getSequence() const { return this->sequence; }
-
-void DatabaseEntry::setSequence(int newSequence) { this->sequence = newSequence; }
 
 int DatabaseEntry::getEntryType() const { return this->entryType; }
 

@@ -9,7 +9,11 @@ ApiKeyEntryEditor::ApiKeyEntryEditor(QWidget* parent, ApiKeyEntry* dbEntry) : QD
     ui->setupUi(this);
 
     this->dbEntry = dbEntry;
-    ui->PathLineEdit->setText(dbEntry->getPath());
+    ui->NameLineEdit->setText(QString::fromUtf8(dbEntry->getName()));
+    ui->PathLineEdit->setText(QString::fromUtf8(dbEntry->getPath()));
+    ui->UrlLineEdit->setText(QString::fromUtf8(dbEntry->getUrl()));
+    ui->KeyLineEdit->setText(QString::fromUtf8(dbEntry->getKey()));
+    ui->NotesPlainTextEdit->setPlainText(QString::fromUtf8(dbEntry->getNotes()));
 
     connect(ui->KeyShowPushButton, &QAbstractButton::clicked, this, &ApiKeyEntryEditor::setKeyVisible);
     connect(ui->SavePushButton, &QAbstractButton::clicked, this, &QDialog::accept);

@@ -32,7 +32,7 @@
 #define CIPHER_SETTINGS_AES                   "AES-%1/EAX"
 #define CIPHER_SETTINGS_SERPENT               "Serpent/EAX"
 #define CIPHER_SETTINGS_TWOFISH               "Twofish/EAX"
-#define CIPHER_SETTINGS_CAMELLIA              "Camellia/EAX"
+#define CIPHER_SETTINGS_CAMELLIA              "Camellia-%1/EAX"
 #define CIPHER_SETTINGS_CHACHA20              "ChaCha20"
 
 #endif // CONFIGS_H

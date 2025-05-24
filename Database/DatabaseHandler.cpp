@@ -326,7 +326,7 @@ QString DatabaseHandler::getCipherSetting(const QString& algorithm, size_t keyLe
     if (algorithm.trimmed().compare("AES", Qt::CaseSensitivity::CaseInsensitive) == 0) return QString(CIPHER_SETTINGS_AES).arg(keyLength);
     if (algorithm.trimmed().compare("Serpent", Qt::CaseSensitivity::CaseInsensitive) == 0)  return QString(CIPHER_SETTINGS_SERPENT);
     if (algorithm.trimmed().compare("Twofish", Qt::CaseSensitivity::CaseInsensitive) == 0)  return QString(CIPHER_SETTINGS_TWOFISH);
-    if (algorithm.trimmed().compare("Camellia", Qt::CaseSensitivity::CaseInsensitive) == 0) return QString(CIPHER_SETTINGS_CAMELLIA);
+    if (algorithm.trimmed().compare("Camellia", Qt::CaseSensitivity::CaseInsensitive) == 0) return QString(CIPHER_SETTINGS_CAMELLIA).arg(keyLength);
     if (algorithm.trimmed().compare("ChaCha20", Qt::CaseSensitivity::CaseInsensitive) == 0) return QString(CIPHER_SETTINGS_CHACHA20);
     throw std::runtime_error("Algorithm not supported");
 }

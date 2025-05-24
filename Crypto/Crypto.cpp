@@ -29,14 +29,15 @@ SecureQByteArray Crypto::generateRandomKey(size_t keyLength)
     return SecureQByteArray(reinterpret_cast<const char*>(key.data()), static_cast<int>(key.size()));
 }
 
-SecureQByteArray Crypto::getHash(const SecureQByteArray& plainText, const QString& algorithm)
+SecureQByteArray Crypto::getHash(const SecureQByteArray& plainText, const QString& algorithm, bool hexEncode)
 {
     std::unique_ptr<Botan::HashFunction> hashFunction = Botan::HashFunction::create(algorithm.toStdString());
     if (!hashFunction) throw std::runtime_error("Algorithm not supported");
     Botan::secure_vector<uint8_t> bytes(plainText.cbegin(), plainText.cend());
     hashFunction->update(bytes);
     bytes = hashFunction->final();
-    return SecureQByteArray(reinterpret_cast<const char*>(bytes.data()), static_cast<int>(bytes.size()));
+    return (hexEncode ? SecureQByteArray(Botan::hex_encode(bytes))
+                      : SecureQByteArray(reinterpret_cast<const char*>(bytes.data()), static_cast<int>(bytes.size())));
 }
 
 SecureQByteArray Crypto::generateSalt(size_t length)

@@ -36,7 +36,7 @@ QVariant SecureDatabaseEntryListModel::data(const QModelIndex& index, int role) 
     return ((!index.isValid() || role != Qt::DisplayRole) ? QVariant() : SecureQByteArray(QString("%1 - %2").arg(entry.getEntryId()).arg(entry.getName().data()).toUtf8()));
 }
 
-const DatabaseEntry& SecureDatabaseEntryListModel::getDbEntry() const { return this->rootNode->value; }
+DatabaseEntry& SecureDatabaseEntryListModel::getDbEntry(const QModelIndex& index) const { return this->nodeFromIndex(index)->value; }
 
 void SecureDatabaseEntryListModel::addItem(const QModelIndex& parent, const DatabaseEntry& value)
 {

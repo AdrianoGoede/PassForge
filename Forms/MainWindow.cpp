@@ -5,6 +5,7 @@
 #include "PasswordGenerator.h"
 #include "ApiKeyEntryEditor.h"
 #include "../Configs/Configs.h"
+#include "../Configs/Constants.h"
 #include "Models/SecureTreeModel.h"
 #include "Models/SecureDatabaseEntryModel.h"
 #include <QStandardItemModel>
@@ -31,6 +32,7 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWi
     connect(ui->ActionToolsPasswordGenerator, &QAction::triggered, this, &MainWindow::OpenPasswordGenerator);
     connect(ui->ActionApplicationQuit, &QAction::triggered, this, &MainWindow::QuitApplication);
     connect(ui->DirectoryStructureTreeView, &QAbstractItemView::clicked, this, &MainWindow::LoadDatabaseEntries);
+    connect(ui->EntryListView, &QAbstractItemView::doubleClicked, this, &MainWindow::OpenEntryManegementWindow);
 }
 
 MainWindow::~MainWindow() { delete ui; }
@@ -96,6 +98,28 @@ void MainWindow::OpenNewApiKeyWindow()
 void MainWindow::OpenNewCryptocurrency()
 {
 
+}
+
+void MainWindow::OpenEntryManegementWindow(const QModelIndex& index)
+{
+    try {
+        const DatabaseEntry& dbEntryHeader = qobject_cast<SecureDatabaseEntryListModel*>(ui->EntryListView->model())->getDbEntry(index);
+        switch (dbEntryHeader.getEntryType()) {
+            case DATABASE_ENTRY_TYPE_CREDENTIAL: break;
+            case DATABASE_ENTRY_TYPE_CRYPTOCURRENCY: break;
+            case DATABASE_ENTRY_TYPE_API_KEY: {
+                ApiKeyEntry dbEntry = this->databaseHandler->getApiKeyEntry(dbEntryHeader);
+                if (ApiKeyEntryEditor(this, &dbEntry).exec() == QDialog::Accepted) {
+                    this->databaseHandler->saveDatabaseEntry(dbEntry);
+                    if (dbEntry.getPath() != dbEntryHeader.getPath())
+                        this->LoadDirectoryStructure();
+                    else
+                        this->LoadDatabaseEntries(ui->DirectoryStructureTreeView->currentIndex());
+                }
+            } break;
+        }
+    }
+    catch (const std::runtime_error& error) { QMessageBox::critical(this, "Error", error.what()); }
 }
 
 void MainWindow::LoadDatabaseEntries(const QModelIndex& index)

@@ -2,12 +2,13 @@
 #define DATABASEENTRY_H
 
 #include "../Crypto/SecureQByteArray.h"
+#include "../Configs/Constants.h"
 #include <QByteArray>
 
 class DatabaseEntry
 {
 public:
-    DatabaseEntry();
+    DatabaseEntry(int type = DATABASE_ENTRY_TYPE_UNSPECIFIED);
     DatabaseEntry(const DatabaseEntry& other);
     DatabaseEntry(const SecureQByteArray& header, int entryId = 0);
     ~DatabaseEntry();
@@ -31,7 +32,7 @@ public:
     void setEntryType(int newEntryType);
 
 protected:
-    int entryId, sequence, entryType;
+    int entryId, entryType;
     SecureQByteArray name, path;
 };
 

@@ -22,6 +22,7 @@
 #define DATABASE_SETTINGS_DATA_GENERAL            "GeneralSection"
 #define DATABASE_SETTINGS_DATA_SECURITY           "SecuritySection"
 
+#define DATABASE_ENTRY_TYPE_UNSPECIFIED           0
 #define DATABASE_ENTRY_TYPE_CREDENTIAL            1
 #define DATABASE_ENTRY_TYPE_CRYPTOCURRENCY        2
 #define DATABASE_ENTRY_TYPE_API_KEY               3

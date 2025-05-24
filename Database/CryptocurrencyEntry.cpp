@@ -1,8 +1,9 @@
 #include "CryptocurrencyEntry.h"
+#include "../Configs/Constants.h"
 #include <QJsonDocument>
 #include <QJsonObject>
 
-CryptocurrencyEntry::CryptocurrencyEntry() : DatabaseEntry() {}
+CryptocurrencyEntry::CryptocurrencyEntry() : DatabaseEntry(DATABASE_ENTRY_TYPE_CRYPTOCURRENCY) {}
 
 CryptocurrencyEntry::CryptocurrencyEntry(const SecureQByteArray& header, const SecureQByteArray& body) : DatabaseEntry(header) { this->deserializeJson(body); }
 

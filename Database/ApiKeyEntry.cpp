@@ -1,8 +1,9 @@
 #include "ApiKeyEntry.h"
 #include <QJsonDocument>
 #include <QJsonObject>
+#include "../Configs/Constants.h"
 
-ApiKeyEntry::ApiKeyEntry() : DatabaseEntry() {}
+ApiKeyEntry::ApiKeyEntry() : DatabaseEntry(DATABASE_ENTRY_TYPE_API_KEY) { }
 
 ApiKeyEntry::ApiKeyEntry(const SecureQByteArray& header, const SecureQByteArray& body) : DatabaseEntry(header) { this->deserializeJson(body); }
 

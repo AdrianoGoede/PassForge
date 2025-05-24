@@ -31,7 +31,7 @@ PasswordGenerator::PasswordGenerator(QWidget *parent) : QDialog(parent), ui(new 
 
 PasswordGenerator::~PasswordGenerator() { delete ui; }
 
-SecureQByteArray PasswordGenerator::getValue() const { return ui->PasswordLineEdit->text().toUtf8(); }
+SecureQByteArray PasswordGenerator::getValue() const { return SecureQByteArray(ui->PasswordLineEdit->text().toUtf8()); }
 
 void PasswordGenerator::generatePassword()
 {
@@ -42,7 +42,7 @@ void PasswordGenerator::generatePassword()
         case 2: value.append(this->generateHash()); break;
         default: return;
     }
-    ui->PasswordLineEdit->setText(value);
+    ui->PasswordLineEdit->setText(QString::fromUtf8(value));
 }
 
 void PasswordGenerator::validatePassword()
@@ -99,7 +99,7 @@ SecureQByteArray PasswordGenerator::generateHash() const
 {
     SecureQByteArray plainText(ui->HashPlainTextEdit->toPlainText().toUtf8());
     if (plainText.isEmpty()) return SecureQByteArray();
-    SecureQByteArray hash = Crypto::getHash(plainText, ui->HashAlgorithmComboBox->currentText().toUtf8());
+    SecureQByteArray hash = Crypto::getHash(plainText, ui->HashAlgorithmComboBox->currentText().toUtf8(), true);
     return hash;
 }
 

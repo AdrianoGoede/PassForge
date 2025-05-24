@@ -27,6 +27,7 @@ private slots:
     void OpenNewCredentialWindow();
     void OpenNewApiKeyWindow();
     void OpenNewCryptocurrency();
+    void OpenEntryManegementWindow(const QModelIndex& index);
     void LoadDatabaseEntries(const QModelIndex& index);
     void QuitApplication();
 

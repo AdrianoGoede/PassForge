@@ -11,21 +11,20 @@ public:
     CredentialEntry();
     CredentialEntry(const SecureQByteArray& header, const SecureQByteArray& body);
     CredentialEntry(const DatabaseEntry& header, const SecureQByteArray& body);
-    ~CredentialEntry();
 
     SecureQByteArray getBodyJson() const override;
 
     const SecureQByteArray& getUsername() const;
-    void setUsername(QByteArray& newUsername);
+    void setUsername(QByteArray&& newUsername);
 
     const SecureQByteArray& getPassword() const;
-    void setPassword(QByteArray& newPassword);
+    void setPassword(QByteArray&& newPassword);
 
     const SecureQByteArray& getNotes() const;
-    void setNotes(QByteArray& newNotes);
+    void setNotes(QByteArray&& newNotes);
 
     const SecureQByteArray& getUrl() const;
-    void setUrl(QByteArray& newUrl);
+    void setUrl(QByteArray&& newUrl);
 
 private:
     SecureQByteArray username, password, notes, url;

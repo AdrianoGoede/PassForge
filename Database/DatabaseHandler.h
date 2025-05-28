@@ -28,6 +28,7 @@ public:
     DatabaseHandler(const QString& filePath, const SecureQByteArray& password, const DatabaseHandlerBasicData* basicData = nullptr);
     ~DatabaseHandler();
     void saveDatabaseEntry(const DatabaseEntry& entry);
+    void deleteDatabaseEntry(int entryId) const;
     QVector<SecureQByteArray> getEntryPaths() const;
     QVector<DatabaseEntry> getEntryHeaders(const SecureQByteArray& path) const;
     CredentialEntry getCredentialEntry(const DatabaseEntry& entry) const;

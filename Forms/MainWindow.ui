@@ -14,7 +14,7 @@
    <string>PassForge</string>
   </property>
   <widget class="QWidget" name="CentralWidget">
-   <widget class="QWidget" name="">
+   <widget class="QWidget" name="layoutWidget">
     <property name="geometry">
      <rect>
       <x>10</x>
@@ -62,6 +62,9 @@
      </item>
      <item row="1" column="1">
       <widget class="QPushButton" name="AddEntryPushButton">
+       <property name="enabled">
+        <bool>false</bool>
+       </property>
        <property name="font">
         <font>
          <pointsize>11</pointsize>
@@ -96,8 +99,6 @@
     </property>
     <addaction name="ActionDatabaseNew"/>
     <addaction name="ActionDatabaseOpen"/>
-    <addaction name="ActionDatabaseSave"/>
-    <addaction name="ActionDatabaseSaveAs"/>
     <addaction name="separator"/>
     <addaction name="ActionDatabaseSettings"/>
     <addaction name="ActionDatabaseClose"/>
@@ -106,36 +107,18 @@
    </widget>
    <widget class="QMenu" name="MainWindowMenubarMenuEntries">
     <property name="enabled">
-     <bool>false</bool>
+     <bool>true</bool>
     </property>
     <property name="title">
      <string>Entries</string>
     </property>
-    <addaction name="ActionEntryNew"/>
-    <addaction name="ActionEntryEdit"/>
     <addaction name="ActionEntryDuplicate"/>
-    <addaction name="ActionEntryDelete"/>
     <addaction name="separator"/>
     <addaction name="ActionMoveEntryUp"/>
     <addaction name="ActionMoveEntryDown"/>
     <addaction name="separator"/>
-    <addaction name="ActionCopyEntryUsername"/>
-    <addaction name="ActionCopyEntryPassword"/>
-    <addaction name="ActionCopyEntryAttribute"/>
     <addaction name="separator"/>
     <addaction name="ActionPerfomEntryAutoType"/>
-   </widget>
-   <widget class="QMenu" name="MainWindowMenubarMenuGroups">
-    <property name="enabled">
-     <bool>false</bool>
-    </property>
-    <property name="title">
-     <string>Groups</string>
-    </property>
-    <addaction name="ActionGroupNew"/>
-    <addaction name="ActionGroupEdit"/>
-    <addaction name="ActionGroupDuplicate"/>
-    <addaction name="ActionGroupDelete"/>
    </widget>
    <widget class="QMenu" name="MainWindowMenubarMenuTools">
     <property name="title">
@@ -152,7 +135,6 @@
    </widget>
    <addaction name="MainWindowMenubarMenuDatabase"/>
    <addaction name="MainWindowMenubarMenuEntries"/>
-   <addaction name="MainWindowMenubarMenuGroups"/>
    <addaction name="MainWindowMenubarMenuTools"/>
    <addaction name="MainWindowMenubarMenuHelp"/>
   </widget>
@@ -215,6 +197,9 @@
    </property>
   </action>
   <action name="ActionEntryDuplicate">
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
    <property name="text">
     <string>Duplicate</string>
    </property>
@@ -225,11 +210,17 @@
    </property>
   </action>
   <action name="ActionMoveEntryUp">
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
    <property name="text">
     <string>Move Up</string>
    </property>
   </action>
   <action name="ActionMoveEntryDown">
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
    <property name="text">
     <string>Move Down</string>
    </property>

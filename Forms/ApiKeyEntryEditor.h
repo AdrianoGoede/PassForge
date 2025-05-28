@@ -3,7 +3,6 @@
 
 #include "../Database/ApiKeyEntry.h"
 #include <QDialog>
-#include <QString>
 
 namespace Ui {
 class ApiKeyEntryEditor;

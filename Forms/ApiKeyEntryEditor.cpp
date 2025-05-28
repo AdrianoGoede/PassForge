@@ -1,23 +1,20 @@
 #include "ApiKeyEntryEditor.h"
 #include "ui_ApiKeyEntryEditor.h"
 
-#include <QMessageBox>
-
-ApiKeyEntryEditor::ApiKeyEntryEditor(QWidget* parent, ApiKeyEntry* dbEntry) : QDialog(parent), ui(new Ui::ApiKeyEntryEditor)
+ApiKeyEntryEditor::ApiKeyEntryEditor(QWidget* parent, ApiKeyEntry* dbEntry) : QDialog(parent), dbEntry(dbEntry), ui(new Ui::ApiKeyEntryEditor)
 {
-    if (!dbEntry) throw std::runtime_error("dbEntry must be passed");
+    if (!this->dbEntry) throw std::runtime_error("dbEntry must be passed");
     ui->setupUi(this);
 
-    this->dbEntry = dbEntry;
-    ui->NameLineEdit->setText(QString::fromUtf8(dbEntry->getName()));
-    ui->PathLineEdit->setText(QString::fromUtf8(dbEntry->getPath()));
-    ui->UrlLineEdit->setText(QString::fromUtf8(dbEntry->getUrl()));
-    ui->KeyLineEdit->setText(QString::fromUtf8(dbEntry->getKey()));
-    ui->NotesPlainTextEdit->setPlainText(QString::fromUtf8(dbEntry->getNotes()));
+    ui->NameLineEdit->setText(QString::fromUtf8(this->dbEntry->getName()));
+    ui->PathLineEdit->setText(QString::fromUtf8(this->dbEntry->getPath()));
+    ui->UrlLineEdit->setText(QString::fromUtf8(this->dbEntry->getUrl()));
+    ui->KeyLineEdit->setText(QString::fromUtf8(this->dbEntry->getKey()));
+    ui->NotesPlainTextEdit->setPlainText(QString::fromUtf8(this->dbEntry->getNotes()));
 
     connect(ui->KeyShowPushButton, &QAbstractButton::clicked, this, &ApiKeyEntryEditor::setKeyVisible);
-    connect(ui->SavePushButton, &QAbstractButton::clicked, this, &QDialog::accept);
-    connect(ui->CancelPushButton, &QAbstractButton::clicked, this, &QDialog::reject);
+    connect(ui->SavePushButton, &QAbstractButton::clicked, this, &ApiKeyEntryEditor::accept);
+    connect(ui->CancelPushButton, &QAbstractButton::clicked, this, &ApiKeyEntryEditor::reject);
 }
 
 ApiKeyEntryEditor::~ApiKeyEntryEditor() { delete ui; }

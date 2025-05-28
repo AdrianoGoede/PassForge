@@ -2,7 +2,7 @@
 #include <QJsonDocument>
 #include <QJsonObject>
 
-CredentialEntry::CredentialEntry() : DatabaseEntry() { }
+CredentialEntry::CredentialEntry() : DatabaseEntry(DATABASE_ENTRY_TYPE_CREDENTIAL) { }
 
 CredentialEntry::CredentialEntry(const SecureQByteArray& header, const SecureQByteArray& body) : DatabaseEntry(header) { this->deserializeJson(body); }
 
@@ -20,19 +20,19 @@ SecureQByteArray CredentialEntry::getBodyJson() const
 
 const SecureQByteArray& CredentialEntry::getUsername() const { return this->username; }
 
-void CredentialEntry::setUsername(QByteArray& newUsername) { this->username = SecureQByteArray(std::move(newUsername)); }
+void CredentialEntry::setUsername(QByteArray&& newUsername) { this->username = SecureQByteArray(std::move(newUsername)); }
 
 const SecureQByteArray& CredentialEntry::getPassword() const { return this->password; }
 
-void CredentialEntry::setPassword(QByteArray& newPassword) { this->password = SecureQByteArray(std::move(newPassword)); }
+void CredentialEntry::setPassword(QByteArray&& newPassword) { this->password = SecureQByteArray(std::move(newPassword)); }
 
 const SecureQByteArray& CredentialEntry::getNotes() const { return this->notes; }
 
-void CredentialEntry::setNotes(QByteArray& newNotes) { this->notes = SecureQByteArray(std::move(newNotes)); }
+void CredentialEntry::setNotes(QByteArray&& newNotes) { this->notes = SecureQByteArray(std::move(newNotes)); }
 
 const SecureQByteArray& CredentialEntry::getUrl() const { return this->url; }
 
-void CredentialEntry::setUrl(QByteArray& newUrl) { this->url = SecureQByteArray(std::move(newUrl)); }
+void CredentialEntry::setUrl(QByteArray&& newUrl) { this->url = SecureQByteArray(std::move(newUrl)); }
 
 void CredentialEntry::deserializeJson(const QByteArray& body)
 {

@@ -26,7 +26,7 @@ DatabaseHandler::DatabaseHandler(const QString& filePath, const SecureQByteArray
 
     if (Crypto::getHash(QByteArray(password) + this->dbBasicData.KeySalt, DATABASE_DEFAULT_PASSWORD_ALGORITHM) != this->dbBasicData.PasswordHash)
         throw std::runtime_error("Failed to unlock database");
-    this->masterEncryptionKey = Crypto::deriveKey(password, std::move(this->dbBasicData.KeySalt), (this->dbBasicData.EncryptionKeyLength / 8), this->dbBasicData.KeyDerivationRounds, this->dbBasicData.KeyDerivationFunction);
+    this->masterEncryptionKey = Crypto::deriveKey(password, this->dbBasicData.KeySalt.data(), (this->dbBasicData.EncryptionKeyLength / 8), this->dbBasicData.KeyDerivationRounds, this->dbBasicData.KeyDerivationFunction);
 
     this->fetchDatabaseSettingsData();
     this->dbBasicData.EncryptionAlgorithm = this->getCipherSetting(this->dbBasicData.EncryptionAlgorithm, (this->masterEncryptionKey.length() * 8));
@@ -70,6 +70,25 @@ void DatabaseHandler::saveDatabaseEntry(const DatabaseEntry& entry)
     }
 
     if (sqlite3_finalize(statement) != SQLITE_OK) throw std::runtime_error(sqlite3_errmsg(this->database));
+}
+
+void DatabaseHandler::deleteDatabaseEntry(int entryId) const
+{
+    sqlite3_stmt* statement;
+    const char sql[] = "DELETE FROM secret_data WHERE entry_id = ?;";
+    if (sqlite3_prepare_v2(this->database, sql, -1, &statement, nullptr) != SQLITE_OK)
+        throw std::runtime_error(sqlite3_errmsg(this->database));
+    sqlite3_bind_int(statement, 1, entryId);
+
+    try {
+        if (sqlite3_step(statement) != SQLITE_DONE)
+            throw std::runtime_error(sqlite3_errmsg(this->database));
+        sqlite3_finalize(statement);
+    }
+    catch (...) {
+        sqlite3_finalize(statement);
+        throw;
+    }
 }
 
 QVector<SecureQByteArray> DatabaseHandler::getEntryPaths() const

@@ -15,16 +15,16 @@ public:
     SecureQByteArray getBodyJson() const override;
 
     const SecureQByteArray& getCryptocurrencyName() const;
-    void setCryptocurrencyName(QByteArray& newCryptocurrencyName);
+    void setCryptocurrencyName(QByteArray&& newCryptocurrencyName);
 
     const SecureQByteArray& getSeed() const;
-    void setSeed(QByteArray& newSeed);
+    void setSeed(QByteArray&& newSeed);
 
     const SecureQByteArray& getMasterPrivateKey() const;
-    void setMasterPrivateKey(QByteArray& newMasterPrivateKey);
+    void setMasterPrivateKey(QByteArray&& newMasterPrivateKey);
 
     const SecureQByteArray& getNotes() const;
-    void setNotes(QByteArray& newNotes);
+    void setNotes(QByteArray&& newNotes);
 
 private:
     SecureQByteArray cryptocurrencyName, seed, masterPrivateKey, notes;

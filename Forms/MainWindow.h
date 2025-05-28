@@ -3,6 +3,8 @@
 
 #include <QMainWindow>
 #include "../Database/DatabaseHandler.h"
+#include "Models/SecureTreeModel.h"
+#include "Models/SecureDatabaseEntryModel.h"
 #include <QStandardItem>
 
 QT_BEGIN_NAMESPACE
@@ -26,7 +28,8 @@ private slots:
     void OpenPasswordGenerator();
     void OpenNewCredentialWindow();
     void OpenNewApiKeyWindow();
-    void OpenNewCryptocurrency();
+    void OpenNewCryptocurrencyWindow();
+    void DeleteEntry();
     void OpenEntryManegementWindow(const QModelIndex& index);
     void LoadDatabaseEntries(const QModelIndex& index);
     void QuitApplication();
@@ -34,9 +37,13 @@ private slots:
 private:
     Ui::MainWindow *ui;
     std::unique_ptr<DatabaseHandler> databaseHandler = nullptr;
+    std::unique_ptr<SecureTreeModel> directoryTreeModel = nullptr;
+    std::unique_ptr<SecureDatabaseEntryListModel> entryListModel = nullptr;
 
-    void LoadDirectoryStructure();
-    SecureQByteArray GetSelectedPath(const QModelIndex& index) const;
+    void loadDirectoryStructure();
+    SecureQByteArray getSelectedPath(const QModelIndex& index) const;
+    void setDatabaseControlsEnabled(bool enabled);
+    void closeDatabase();
 };
 
 #endif // MAINWINDOW_H

@@ -21,19 +21,19 @@ SecureQByteArray CryptocurrencyEntry::getBodyJson() const
 
 const SecureQByteArray& CryptocurrencyEntry::getCryptocurrencyName() const { return this->cryptocurrencyName; }
 
-void CryptocurrencyEntry::setCryptocurrencyName(QByteArray& newCryptocurrencyName) { this->cryptocurrencyName = SecureQByteArray(std::move(newCryptocurrencyName)); }
+void CryptocurrencyEntry::setCryptocurrencyName(QByteArray&& newCryptocurrencyName) { this->cryptocurrencyName = SecureQByteArray(std::move(newCryptocurrencyName)); }
 
 const SecureQByteArray& CryptocurrencyEntry::getSeed() const { return this->seed; }
 
-void CryptocurrencyEntry::setSeed(QByteArray& newSeed) { this->seed = SecureQByteArray(std::move(newSeed)); }
+void CryptocurrencyEntry::setSeed(QByteArray&& newSeed) { this->seed = SecureQByteArray(std::move(newSeed)); }
 
 const SecureQByteArray& CryptocurrencyEntry::getMasterPrivateKey() const { return this->masterPrivateKey; }
 
-void CryptocurrencyEntry::setMasterPrivateKey(QByteArray& newMasterPrivateKey) { this->masterPrivateKey = SecureQByteArray(std::move(newMasterPrivateKey)); }
+void CryptocurrencyEntry::setMasterPrivateKey(QByteArray&& newMasterPrivateKey) { this->masterPrivateKey = SecureQByteArray(std::move(newMasterPrivateKey)); }
 
 const SecureQByteArray& CryptocurrencyEntry::getNotes() const { return this->notes; }
 
-void CryptocurrencyEntry::setNotes(QByteArray& newNotes) { this->notes = SecureQByteArray(std::move(newNotes)); }
+void CryptocurrencyEntry::setNotes(QByteArray&& newNotes) { this->notes = SecureQByteArray(std::move(newNotes)); }
 
 void CryptocurrencyEntry::deserializeJson(const QByteArray &body)
 {

@@ -293,7 +293,7 @@ void DatabaseHandler::fetchDatabaseSettingsData()
             this->dbBasicData.EncryptionAlgorithm
         );
         SecureQByteArray value = Crypto::decrypt(
-            SecureQByteArray(reinterpret_cast<const char*>(sqlite3_column_text(statement, 2)), sqlite3_column_bytes(statement, 2)),
+            SecureQByteArray(reinterpret_cast<const char*>(sqlite3_column_blob(statement, 2)), sqlite3_column_bytes(statement, 2)),
             sectionKey,
             this->dbBasicData.EncryptionAlgorithm
         );

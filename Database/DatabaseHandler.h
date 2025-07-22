@@ -1,7 +1,6 @@
 #ifndef DATABASEHANDLER_H
 #define DATABASEHANDLER_H
 
-#include "DatabaseHandlerSettings.h"
 #include "../Crypto/SecureQByteArray.h"
 #include "DatabaseEntry.h"
 #include "CredentialEntry.h"
@@ -34,11 +33,11 @@ public:
     CredentialEntry getCredentialEntry(const DatabaseEntry& entry) const;
     CryptocurrencyEntry getCryptocurrencyEntry(const DatabaseEntry& entry) const;
     ApiKeyEntry getApiKeyEntry(const DatabaseEntry& entry) const;
+    SecureQByteArray getDatabaseSetting(const QString& settingName);
 
 private:
     sqlite3* database = nullptr;
     DatabaseHandlerBasicData dbBasicData;
-    DatabaseHandlerSettings dbSettings;
     SecureQByteArray masterEncryptionKey;
 
     void setNewDatabaseStructure();
@@ -46,7 +45,6 @@ private:
     void createSettingsStructure();
     void createSecretsStructure();
     void fetchDatabaseBasicData();
-    void fetchDatabaseSettingsData();
     SecureQByteArray getDatabaseEntryBody(int entryId) const;
     QString getCipherSetting(const QString& algorithm, size_t keyLength = 0);
 };

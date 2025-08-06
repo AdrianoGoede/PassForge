@@ -33,7 +33,8 @@ public:
     CredentialEntry getCredentialEntry(const DatabaseEntry& entry) const;
     CryptocurrencyEntry getCryptocurrencyEntry(const DatabaseEntry& entry) const;
     ApiKeyEntry getApiKeyEntry(const DatabaseEntry& entry) const;
-    SecureQByteArray getDatabaseSetting(const QString& settingName);
+    SecureQByteArray getDatabaseSetting(const QString& settingName) const;
+    void saveDatabaseSetting(const QString& settingName, const SecureQByteArray& value) const;
 
 private:
     sqlite3* database = nullptr;
@@ -46,7 +47,7 @@ private:
     void createSecretsStructure();
     void fetchDatabaseBasicData();
     SecureQByteArray getDatabaseEntryBody(int entryId) const;
-    QString getCipherSetting(const QString& algorithm, size_t keyLength = 0);
+    QString getCipherSetting(const QString& algorithm, size_t keyLength = 0) const;
 };
 
 #endif // DATABASEHANDLER_H

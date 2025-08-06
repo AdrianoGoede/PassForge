@@ -19,7 +19,8 @@
 #define DATABASE_BASIC_DATA_KEY_DERIVATION_SALT   "KeyDerivationSalt"
 #define DATABASE_BASIC_DATA_PASSWORD_HASH         "PasswordHash"
 
-#define DEFAULT_DATABASE_SETTINGS                 {{ "Language", "en-US" }, { "TimeToClearClipboard", "10" }, { "TimeInactiveToBlock", "3600" }, { "BlockWhenLocked", "false" }, { "BlockWhenMinimized", "false" }, { "EnableRandomEntryPadding", "false" }, { "EntryPaddingMin", "0" }, { "EntryPaddingMax", "100" }}
+#define DEFAULT_DATABASE_SETTINGS                 {{ "Language", "en-US" }, { "TimeToClearClipboard", "10" }, { "TimeInactiveToBlock", "3600" }, { "BlockWhenLocked", "0" }, { "BlockWhenMinimized", "0" }, { "EnableRandomEntryPadding", "0" }, { "EntryPaddingMin", "0" }, { "EntryPaddingMax", "100" }}
+#define DATABASE_SETTINGS_PADDING_SEPARATOR       "||"
 
 #define DATABASE_ENTRY_TYPE_UNSPECIFIED           0
 #define DATABASE_ENTRY_TYPE_CREDENTIAL            1

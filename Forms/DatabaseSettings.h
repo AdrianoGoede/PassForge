@@ -13,12 +13,12 @@ class DatabaseSettings : public QDialog
     Q_OBJECT
 
 public:
-    explicit DatabaseSettings(QWidget *parent = nullptr, DatabaseHandler* dbHandler = nullptr);
+    explicit DatabaseSettings(QWidget *parent = nullptr, const DatabaseHandler* dbHandler = nullptr);
     ~DatabaseSettings();
 
 private:
     Ui::DatabaseSettings *ui;
-    DatabaseHandler* dbHandler;
+    const DatabaseHandler* dbHandler;
 };
 
 #endif // DATABASESETTINGS_H

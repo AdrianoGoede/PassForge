@@ -74,8 +74,11 @@ void MainWindow::OpenExistingDatabase()
 
 void MainWindow::OpenDatabaseSettings()
 {
-    DatabaseSettings settings(this);
-    settings.exec();
+    try {
+        DatabaseSettings settings(this, this->databaseHandler.get());
+        settings.exec();
+    }
+    catch (const std::runtime_error& error) { QMessageBox::critical(this, "Error", error.what()); }
 }
 
 void MainWindow::OpenPasswordGenerator()

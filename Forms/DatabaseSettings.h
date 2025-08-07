@@ -16,9 +16,19 @@ public:
     explicit DatabaseSettings(QWidget *parent = nullptr, const DatabaseHandler* dbHandler = nullptr);
     ~DatabaseSettings();
 
+private slots:
+    void accept() override;
+
 private:
     Ui::DatabaseSettings *ui;
     const DatabaseHandler* dbHandler;
+    bool timeToClearClipboardChanged = false;
+    bool timeToBlockChanged = false;
+    bool blockWhenMachineLockedChanged = false;
+    bool blockWhenMinimizedChanged = false;
+    bool enableEntryPaddingChanged = false;
+    bool randomEntryPaddingMinChanged = false;
+    bool randomEntryPaddingMaxChanged = false;
 };
 
 #endif // DATABASESETTINGS_H

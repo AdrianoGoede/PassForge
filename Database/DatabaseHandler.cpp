@@ -21,6 +21,7 @@ DatabaseHandler::DatabaseHandler(const QString& filePath, const SecureQByteArray
         this->dbBasicData.EncryptionAlgorithm = this->getCipherSetting(this->dbBasicData.EncryptionAlgorithm, this->dbBasicData.EncryptionKeyLength);
         this->dbBasicData.KeySalt = Crypto::generateSalt(this->dbBasicData.EncryptionKeyLength);
         this->dbBasicData.PasswordHash = Crypto::getHash(SecureQByteArray(password) + this->dbBasicData.KeySalt, DATABASE_DEFAULT_PASSWORD_ALGORITHM);
+        this->masterEncryptionKey = Crypto::deriveKey(password, this->dbBasicData.KeySalt.data(), (this->dbBasicData.EncryptionKeyLength / 8), this->dbBasicData.KeyDerivationRounds, this->dbBasicData.KeyDerivationFunction);
         this->setNewDatabaseStructure();
     }
     else
@@ -225,6 +226,7 @@ void DatabaseHandler::saveDatabaseSetting(const QString& settingName, const Secu
     try {
         SecureQByteArray key = Crypto::generateRandomKey(this->dbBasicData.EncryptionKeyLength / 8);
         SecureQByteArray encryptedValue = Crypto::encrypt(value, key, this->dbBasicData.EncryptionAlgorithm);
+        key = Crypto::encrypt(key, this->masterEncryptionKey, this->dbBasicData.EncryptionAlgorithm);
 
         sqlite3_bind_text(statement, 1, settingName.toUtf8().constData(), -1, SQLITE_TRANSIENT);
         sqlite3_bind_blob(statement, 2, key.data(), key.size(), SQLITE_TRANSIENT);

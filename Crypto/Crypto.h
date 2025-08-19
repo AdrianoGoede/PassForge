@@ -11,6 +11,7 @@ public:
     static void wipeMemory(void* address, size_t bytes);
     static void getRandomUnsignedIntegers(uint32_t* buffer, size_t count, uint32_t min, uint32_t max);
     static SecureQByteArray generateRandomKey(size_t keyLength);
+    static SecureQByteArray generateRandomBlob(size_t minSize, size_t maxSize);
     static SecureQByteArray getHash(const SecureQByteArray& plainText, const QString& algorithm, bool hexEncode = false);
     static SecureQByteArray generateSalt(size_t length);
     static SecureQByteArray deriveKey(const SecureQByteArray& password, const SecureQByteArray& salt, size_t keyLength, size_t iterations, const QString& algorithm);

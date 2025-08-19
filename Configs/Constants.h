@@ -19,8 +19,13 @@
 #define DATABASE_BASIC_DATA_KEY_DERIVATION_SALT   "KeyDerivationSalt"
 #define DATABASE_BASIC_DATA_PASSWORD_HASH         "PasswordHash"
 
-#define DEFAULT_DATABASE_SETTINGS                 {{ "Language", "en-US" }, { "TimeToClearClipboard", "10" }, { "TimeInactiveToBlock", "3600" }, { "BlockWhenLocked", "0" }, { "BlockWhenMinimized", "0" }, { "EnableRandomEntryPadding", "0" }, { "EntryPaddingMin", "0" }, { "EntryPaddingMax", "100" }}
-#define DATABASE_SETTINGS_PADDING_SEPARATOR       "||"
+#define DB_SETTINGS_PADDING_SEPARATOR             '\0'
+#define DB_SETTINGS_NAME_CLEAR_CLIPBOARD_TIME     "TimeToClearClipboard"
+#define DB_SETTINGS_NAME_INACTIVE_BLOCK_TIME      "TimeInactiveToBlock"
+#define DB_SETTINGS_NAME_BLOCK_WHEN_LOCKED        "BlockWhenLocked"
+#define DB_SETTINGS_NAME_BLOCK_WHEN_MINIMIZED     "BlockWhenMinimized"
+#define DB_SETTINGS_NAME_RANDOM_PADDING_INTERVAL  "RandomEntryPaddingInterval"
+#define DEFAULT_DATABASE_SETTINGS                 {{ DB_SETTINGS_NAME_CLEAR_CLIPBOARD_TIME, "10" }, { DB_SETTINGS_NAME_INACTIVE_BLOCK_TIME, "3600" }, { DB_SETTINGS_NAME_BLOCK_WHEN_LOCKED, "0" }, { DB_SETTINGS_NAME_BLOCK_WHEN_MINIMIZED, "0" }, { DB_SETTINGS_NAME_RANDOM_PADDING_INTERVAL, "0-0" }}
 
 #define DATABASE_ENTRY_TYPE_UNSPECIFIED           0
 #define DATABASE_ENTRY_TYPE_CREDENTIAL            1

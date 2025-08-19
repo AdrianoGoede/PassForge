@@ -29,6 +29,19 @@ SecureQByteArray Crypto::generateRandomKey(size_t keyLength)
     return SecureQByteArray(reinterpret_cast<const char*>(key.data()), static_cast<int>(key.size()));
 }
 
+SecureQByteArray Crypto::generateRandomBlob(size_t minSize, size_t maxSize)
+{
+    const size_t range = (maxSize - minSize + 1);
+    const size_t discard_limit = (SIZE_MAX / range * range);
+    Botan::AutoSeeded_RNG rng;
+    size_t blobSize;
+    do {
+        rng.randomize(reinterpret_cast<uint8_t*>(&blobSize), sizeof(blobSize));
+    } while (blobSize >= discard_limit);
+    Botan::secure_vector<uint8_t> result = rng.random_vec(blobSize);
+    return SecureQByteArray(reinterpret_cast<const char*>(result.data()), static_cast<int>(result.size()));
+}
+
 SecureQByteArray Crypto::getHash(const SecureQByteArray& plainText, const QString& algorithm, bool hexEncode)
 {
     std::unique_ptr<Botan::HashFunction> hashFunction = Botan::HashFunction::create(algorithm.toStdString());

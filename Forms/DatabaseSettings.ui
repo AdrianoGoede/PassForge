@@ -38,13 +38,8 @@
     <item>
      <widget class="QTabWidget" name="TabWidget">
       <property name="currentIndex">
-       <number>1</number>
+       <number>0</number>
       </property>
-      <widget class="QWidget" name="GeneralTab">
-       <attribute name="title">
-        <string>General</string>
-       </attribute>
-      </widget>
       <widget class="QWidget" name="SecurityTab">
        <attribute name="title">
         <string>Security</string>

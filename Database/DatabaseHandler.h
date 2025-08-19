@@ -46,6 +46,9 @@ private:
     void createSettingsStructure();
     void createSecretsStructure();
     void fetchDatabaseBasicData();
+    void processSettingChange(const QString& setting, const SecureQByteArray& value) const;
+    void getEntryValues(sqlite3_stmt* statement, SecureQByteArray& entryKey, SecureQByteArray& path, SecureQByteArray& headerData, SecureQByteArray& bodyData) const;
+    void prepareEntryValues(int min, int max, SecureQByteArray& entryKey, SecureQByteArray& path, SecureQByteArray& headerData, SecureQByteArray& bodyData) const;
     SecureQByteArray getDatabaseEntryBody(int entryId) const;
     QString getCipherSetting(const QString& algorithm, size_t keyLength = 0) const;
 };

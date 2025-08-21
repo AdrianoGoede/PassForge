@@ -40,47 +40,53 @@ DatabaseHandler::~DatabaseHandler()
 
 void DatabaseHandler::saveDatabaseEntry(const DatabaseEntry& entry)
 {
-    SecureQByteArray randomKey = Crypto::generateRandomKey(this->dbBasicData.EncryptionKeyLength / 8);
-    SecureQByteArray path = Crypto::encrypt(entry.getPath(), randomKey, this->dbBasicData.EncryptionAlgorithm);
-    SecureQByteArray header = Crypto::encrypt(entry.getHeaderJson(), randomKey, this->dbBasicData.EncryptionAlgorithm);
-    SecureQByteArray body = Crypto::encrypt(entry.getBodyJson(), randomKey, this->dbBasicData.EncryptionAlgorithm);
-    randomKey = Crypto::encrypt(randomKey, this->masterEncryptionKey, this->dbBasicData.EncryptionAlgorithm);
-
-    const std::string sql = (entry.getEntryId() <= 0
-                             ? "INSERT INTO secret_data (entry_key,path,header_data,body_data) VALUES (?,?,?,?)"
-                             : "UPDATE secret_data SET entry_key = ?, path = ?,header_data = ?,body_data = ? WHERE entry_id = ?");
-
     sqlite3_stmt* statement;
+
     try {
-        if (sqlite3_prepare_v2(this->database, sql.data(), -1, &statement, nullptr) != SQLITE_OK)
+        QList<SecureQByteArray> paddingInterval = this->getDatabaseSetting(DB_SETTINGS_NAME_RANDOM_PADDING_INTERVAL).secureSplit('-');
+        if (paddingInterval.size() != 2)
+            paddingInterval = QList<SecureQByteArray>({ "0", "0" });
+        bool minOk, maxOk;
+        int min = paddingInterval.at(0).toInt(&minOk);
+        int max = paddingInterval.at(1).toInt(&maxOk);
+        if (!minOk || ! maxOk || max < min)
+            min = max = 0;
+
+        SecureQByteArray randomKey = Crypto::generateRandomKey(this->dbBasicData.EncryptionKeyLength / 8);
+        SecureQByteArray path = this->encryptBlob(entry.getPath(), randomKey, min, max);
+        SecureQByteArray header = this->encryptBlob(entry.getHeaderJson(), randomKey, min, max);
+        SecureQByteArray body = this->encryptBlob(entry.getBodyJson(), randomKey, min, max);
+        randomKey = this->encryptBlob(randomKey, this->masterEncryptionKey);
+
+        const char sql[] = "INSERT OR REPLACE INTO secret_data (entry_id,entry_key,path,header_data,body_data) VALUES (?,?,?,?,?);";
+        if (sqlite3_prepare_v2(this->database, sql, -1, &statement, nullptr) != SQLITE_OK)
             throw std::runtime_error(sqlite3_errmsg(this->database));
 
-        sqlite3_bind_blob(statement, 1, randomKey.data(), randomKey.length(), SQLITE_TRANSIENT);
-        sqlite3_bind_blob(statement, 2, path.data(), path.length(), SQLITE_TRANSIENT);
-        sqlite3_bind_blob(statement, 3, header.data(), header.length(), SQLITE_TRANSIENT);
-        sqlite3_bind_blob(statement, 4, body.data(), body.length(), SQLITE_TRANSIENT);
-        if (entry.getEntryId() > 0)
-            sqlite3_bind_int(statement, 5, entry.getEntryId());
+        sqlite3_bind_int(statement, 1, entry.getEntryId());
+        sqlite3_bind_blob(statement, 2, randomKey.data(), randomKey.length(), SQLITE_TRANSIENT);
+        sqlite3_bind_blob(statement, 3, path.data(), path.length(), SQLITE_TRANSIENT);
+        sqlite3_bind_blob(statement, 4, header.data(), header.length(), SQLITE_TRANSIENT);
+        sqlite3_bind_blob(statement, 5, body.data(), body.length(), SQLITE_TRANSIENT);
 
         if (sqlite3_step(statement) != SQLITE_DONE) throw std::runtime_error(sqlite3_errmsg(this->database));
+        if (sqlite3_finalize(statement) != SQLITE_OK) throw std::runtime_error(sqlite3_errmsg(this->database));
     }
     catch (...) {
         sqlite3_finalize(statement);
         throw;
     }
-
-    if (sqlite3_finalize(statement) != SQLITE_OK) throw std::runtime_error(sqlite3_errmsg(this->database));
 }
 
 void DatabaseHandler::deleteDatabaseEntry(int entryId) const
 {
     sqlite3_stmt* statement;
-    const char sql[] = "DELETE FROM secret_data WHERE entry_id = ?;";
-    if (sqlite3_prepare_v2(this->database, sql, -1, &statement, nullptr) != SQLITE_OK)
-        throw std::runtime_error(sqlite3_errmsg(this->database));
-    sqlite3_bind_int(statement, 1, entryId);
 
     try {
+        const char sql[] = "DELETE FROM secret_data WHERE entry_id = ?;";
+        if (sqlite3_prepare_v2(this->database, sql, -1, &statement, nullptr) != SQLITE_OK)
+            throw std::runtime_error(sqlite3_errmsg(this->database));
+        sqlite3_bind_int(statement, 1, entryId);
+
         if (sqlite3_step(statement) != SQLITE_DONE)
             throw std::runtime_error(sqlite3_errmsg(this->database));
         sqlite3_finalize(statement);
@@ -94,12 +100,14 @@ void DatabaseHandler::deleteDatabaseEntry(int entryId) const
 QVector<SecureQByteArray> DatabaseHandler::getEntryPaths() const
 {
     sqlite3_stmt* statement;
-    const char sql[] = "SELECT entry_key,path FROM secret_data;";
-    if (sqlite3_prepare_v2(this->database, sql, -1, &statement, nullptr) != SQLITE_OK)
-        throw std::runtime_error(sqlite3_errmsg(this->database));
 
-    QSet<SecureQByteArray> results;
     try {
+        QSet<SecureQByteArray> results;
+
+        const char sql[] = "SELECT entry_key,path FROM secret_data;";
+        if (sqlite3_prepare_v2(this->database, sql, -1, &statement, nullptr) != SQLITE_OK)
+            throw std::runtime_error(sqlite3_errmsg(this->database));
+
         while (sqlite3_step(statement) == SQLITE_ROW) {
             SecureQByteArray entryKey = Crypto::decrypt(
                 SecureQByteArray(reinterpret_cast<const char*>(sqlite3_column_blob(statement, 0)), sqlite3_column_bytes(statement, 0)),
@@ -113,24 +121,25 @@ QVector<SecureQByteArray> DatabaseHandler::getEntryPaths() const
             ));
         }
         sqlite3_finalize(statement);
+        return QVector<SecureQByteArray>(results.cbegin(), results.cend());
     }
     catch (...) {
         sqlite3_finalize(statement);
         throw;
     }
-
-    return QVector<SecureQByteArray>(results.cbegin(), results.cend());
 }
 
 QVector<DatabaseEntry> DatabaseHandler::getEntryHeaders(const SecureQByteArray& path) const
 {
     sqlite3_stmt* statement;
-    const char sql[] = "SELECT entry_id,entry_key,path,header_data FROM secret_data;";
-    if (sqlite3_prepare_v2(this->database, sql, -1, &statement, nullptr) != SQLITE_OK)
-        throw std::runtime_error(sqlite3_errmsg(this->database));
 
-    QVector<DatabaseEntry> results;
     try {
+        QVector<DatabaseEntry> results;
+
+        const char sql[] = "SELECT entry_id,entry_key,path,header_data FROM secret_data;";
+        if (sqlite3_prepare_v2(this->database, sql, -1, &statement, nullptr) != SQLITE_OK)
+            throw std::runtime_error(sqlite3_errmsg(this->database));
+
         while (sqlite3_step(statement) == SQLITE_ROW) {
             int entryId = sqlite3_column_int(statement, 0);
             SecureQByteArray entryKey = Crypto::decrypt(
@@ -142,24 +151,23 @@ QVector<DatabaseEntry> DatabaseHandler::getEntryHeaders(const SecureQByteArray& 
                 SecureQByteArray(reinterpret_cast<const char*>(sqlite3_column_blob(statement, 2)), sqlite3_column_bytes(statement, 2)),
                 entryKey,
                 this->dbBasicData.EncryptionAlgorithm
-            );
+            ).secureSplit(DB_SETTINGS_PADDING_SEPARATOR).at(0);
             if (entryPath != path) continue;
 
             SecureQByteArray header = Crypto::decrypt(
                 SecureQByteArray(reinterpret_cast<const char*>(sqlite3_column_blob(statement, 3)), sqlite3_column_bytes(statement, 3)),
                 entryKey,
                 this->dbBasicData.EncryptionAlgorithm
-            );
+            ).secureSplit(DB_SETTINGS_PADDING_SEPARATOR).at(0);
             results.push_back(DatabaseEntry(header, entryId));
         }
         sqlite3_finalize(statement);
+        return results;
     }
     catch (...) {
         sqlite3_finalize(statement);
         throw;
     }
-
-    return results;
 }
 
 CredentialEntry DatabaseHandler::getCredentialEntry(const DatabaseEntry& entry) const
@@ -186,14 +194,14 @@ ApiKeyEntry DatabaseHandler::getApiKeyEntry(const DatabaseEntry& entry) const
 SecureQByteArray DatabaseHandler::getDatabaseSetting(const QString& settingName) const
 {
     sqlite3_stmt* statement;
-    const char sql[] = "SELECT key,value FROM settings_data WHERE name = ?;";
-    if (sqlite3_prepare_v2(this->database, sql, -1, &statement, nullptr) != SQLITE_OK)
-        throw std::runtime_error(sqlite3_errmsg(this->database));
-    sqlite3_bind_text(statement, 1, settingName.toUtf8(), -1, SQLITE_TRANSIENT);
 
     try {
-        SecureQByteArray result;
+        const char sql[] = "SELECT key,value FROM settings_data WHERE name = ?;";
+        if (sqlite3_prepare_v2(this->database, sql, -1, &statement, nullptr) != SQLITE_OK)
+            throw std::runtime_error(sqlite3_errmsg(this->database));
+        sqlite3_bind_text(statement, 1, settingName.toUtf8(), -1, SQLITE_TRANSIENT);
 
+        SecureQByteArray result;
         if (sqlite3_step(statement) == SQLITE_ROW) {
             SecureQByteArray entryKey = Crypto::decrypt(
                 SecureQByteArray(reinterpret_cast<const char*>(sqlite3_column_blob(statement, 0)), sqlite3_column_bytes(statement, 0)),
@@ -218,18 +226,16 @@ SecureQByteArray DatabaseHandler::getDatabaseSetting(const QString& settingName)
 
 void DatabaseHandler::saveDatabaseSetting(const QString& settingName, const SecureQByteArray& value) const
 {
-    if (sqlite3_exec(this->database, "BEGIN TRANSACTION;", nullptr, nullptr, nullptr) != SQLITE_OK)
-        throw std::runtime_error(sqlite3_errmsg(this->database));
-
     sqlite3_stmt* statement;
-    const char sql[] = "INSERT OR REPLACE INTO settings_data (name, key, value) VALUES (?,?,?);";
-    if (sqlite3_prepare_v2(this->database, sql, -1, &statement, nullptr) != SQLITE_OK)
-        throw std::runtime_error(sqlite3_errmsg(this->database));
 
     try {
+        const char sql[] = "INSERT OR REPLACE INTO settings_data (name, key, value) VALUES (?,?,?);";
+        if (sqlite3_prepare_v2(this->database, sql, -1, &statement, nullptr) != SQLITE_OK)
+            throw std::runtime_error(sqlite3_errmsg(this->database));
+
         SecureQByteArray key = Crypto::generateRandomKey(this->dbBasicData.EncryptionKeyLength / 8);
-        SecureQByteArray encryptedValue = Crypto::encrypt(value, key, this->dbBasicData.EncryptionAlgorithm);
-        key = Crypto::encrypt(key, this->masterEncryptionKey, this->dbBasicData.EncryptionAlgorithm);
+        SecureQByteArray encryptedValue = this->encryptBlob(value, key);
+        key = this->encryptBlob(key, this->masterEncryptionKey);
 
         sqlite3_bind_text(statement, 1, settingName.toUtf8().constData(), -1, SQLITE_TRANSIENT);
         sqlite3_bind_blob(statement, 2, key.data(), key.size(), SQLITE_TRANSIENT);
@@ -237,16 +243,61 @@ void DatabaseHandler::saveDatabaseSetting(const QString& settingName, const Secu
 
         if (sqlite3_step(statement) != SQLITE_DONE) throw std::runtime_error(sqlite3_errmsg(this->database));
         if (sqlite3_finalize(statement) != SQLITE_OK) throw std::runtime_error(sqlite3_errmsg(this->database));
+    }
+    catch (...) {
+        sqlite3_finalize(statement);
+        throw;
+    }
+}
 
-        this->processSettingChange(settingName, value);
+void DatabaseHandler::saveEntryPaddingSetting(int min, int max) const
+{
+    sqlite3_stmt* selectStatement;
+    sqlite3_stmt* updateStatement;
+
+    try {
+        if (sqlite3_exec(this->database, "BEGIN TRANSACTION;", nullptr, nullptr, nullptr) != SQLITE_OK)
+            throw std::runtime_error(sqlite3_errmsg(this->database));
+
+        this->saveDatabaseSetting(DB_SETTINGS_NAME_RANDOM_PADDING_INTERVAL, SecureQByteArray(QString("%1-%2").arg(min).arg(max).toUtf8()));
+
+        std::string sql = "SELECT entry_id,entry_key,path,header_data,body_data FROM secret_data;";
+        if (sqlite3_prepare_v2(this->database, sql.c_str(), -1, &selectStatement, nullptr) != SQLITE_OK)
+            throw std::runtime_error(sqlite3_errmsg(this->database));
+        sql = "UPDATE secret_data SET entry_key = ?, path = ?, header_data = ?, body_data = ? WHERE entry_id = ?;";
+        if (sqlite3_prepare_v2(this->database, sql.c_str(), -1, &updateStatement, nullptr) != SQLITE_OK)
+            throw std::runtime_error(sqlite3_errmsg(this->database));
+
+        while (sqlite3_step(selectStatement) == SQLITE_ROW) {
+            int entryId = sqlite3_column_int(selectStatement, 0);
+            SecureQByteArray entryKey;
+            SecureQByteArray path;
+            SecureQByteArray headerData;
+            SecureQByteArray bodyData;
+
+            this->getEntryValues(selectStatement, entryKey, path, headerData, bodyData);
+            this->prepareEntryValues(min, max, entryKey, path, headerData, bodyData);
+
+            sqlite3_bind_blob(updateStatement, 1, entryKey.constData(), entryKey.size(), SQLITE_TRANSIENT);
+            sqlite3_bind_blob(updateStatement, 2, path.constData(), path.size(), SQLITE_TRANSIENT);
+            sqlite3_bind_blob(updateStatement, 3, headerData.constData(), headerData.size(), SQLITE_TRANSIENT);
+            sqlite3_bind_blob(updateStatement, 4, bodyData.constData(), bodyData.size(), SQLITE_TRANSIENT);
+            sqlite3_bind_int(updateStatement, 5, entryId);
+
+            if (sqlite3_step(updateStatement) != SQLITE_DONE) throw std::runtime_error(sqlite3_errmsg(this->database));
+            sqlite3_reset(updateStatement);
+        }
+
+        sqlite3_finalize(selectStatement);
+        sqlite3_finalize(updateStatement);
 
         if (sqlite3_exec(this->database, "COMMIT;", nullptr, nullptr, nullptr) != SQLITE_OK)
             throw std::runtime_error(sqlite3_errmsg(this->database));
     }
     catch (...) {
-        sqlite3_finalize(statement);
         sqlite3_exec(this->database, "ROLLBACK;", nullptr, nullptr, nullptr);
-        throw;
+        sqlite3_finalize(selectStatement);
+        sqlite3_finalize(updateStatement);
     }
 }
 
@@ -348,58 +399,6 @@ void DatabaseHandler::fetchDatabaseBasicData()
     sqlite3_finalize(statement);
 }
 
-void DatabaseHandler::processSettingChange(const QString& setting, const SecureQByteArray& value) const
-{
-    if (setting == DB_SETTINGS_NAME_RANDOM_PADDING_INTERVAL) {
-        sqlite3_stmt* selectStatement;
-        sqlite3_stmt* updateStatement;
-
-        try {
-            std::string sql = "SELECT entry_id,entry_key,path,header_data,body_data FROM secret_data;";
-            if (sqlite3_prepare_v2(this->database, sql.c_str(), -1, &selectStatement, nullptr) != SQLITE_OK)
-                throw std::runtime_error(sqlite3_errmsg(this->database));
-            sql = "UPDATE secret_data SET entry_key = ?, path = ?, header_data = ?, body_data = ? WHERE entry_id = ?;";
-            if (sqlite3_prepare_v2(this->database, sql.c_str(), -1, &updateStatement, nullptr) != SQLITE_OK)
-                throw std::runtime_error(sqlite3_errmsg(this->database));
-
-            bool minOk, maxOk;
-            QVector<SecureQByteArray> valueParts = value.secureSplit('-');
-            if (valueParts.size() != 2) throw std::runtime_error("Invalid padding interval format. Expected 'min-max'");
-            int min = QString(valueParts.at(0)).toInt(&minOk);
-            int max = QString(valueParts.at(1)).toInt(&maxOk);
-            if (!minOk || !maxOk || max < min) throw std::runtime_error("Invalid padding interval");
-
-            while (sqlite3_step(selectStatement) == SQLITE_ROW) {
-                int entryId = sqlite3_column_int(selectStatement, 0);
-                SecureQByteArray entryKey;
-                SecureQByteArray path;
-                SecureQByteArray headerData;
-                SecureQByteArray bodyData;
-
-                this->getEntryValues(selectStatement, entryKey, path, headerData, bodyData);
-                this->prepareEntryValues(min, max, entryKey, path, headerData, bodyData);
-
-                sqlite3_bind_blob(updateStatement, 1, entryKey.constData(), entryKey.size(), SQLITE_TRANSIENT);
-                sqlite3_bind_blob(updateStatement, 2, path.constData(), path.size(), SQLITE_TRANSIENT);
-                sqlite3_bind_blob(updateStatement, 3, headerData.constData(), headerData.size(), SQLITE_TRANSIENT);
-                sqlite3_bind_blob(updateStatement, 4, bodyData.constData(), bodyData.size(), SQLITE_TRANSIENT);
-                sqlite3_bind_int(updateStatement, 5, entryId);
-
-                if (sqlite3_step(updateStatement) != SQLITE_DONE) throw std::runtime_error(sqlite3_errmsg(this->database));
-                sqlite3_reset(updateStatement);
-            }
-
-            sqlite3_finalize(selectStatement);
-            sqlite3_finalize(updateStatement);
-        }
-        catch (...) {
-            sqlite3_finalize(selectStatement);
-            sqlite3_finalize(updateStatement);
-            throw;
-        }
-    }
-}
-
 void DatabaseHandler::getEntryValues(sqlite3_stmt* statement, SecureQByteArray& entryKey, SecureQByteArray& path, SecureQByteArray& headerData, SecureQByteArray& bodyData) const
 {
     if (!statement) return;
@@ -428,22 +427,10 @@ void DatabaseHandler::getEntryValues(sqlite3_stmt* statement, SecureQByteArray& 
 void DatabaseHandler::prepareEntryValues(int min, int max, SecureQByteArray& entryKey, SecureQByteArray& path, SecureQByteArray& headerData, SecureQByteArray& bodyData) const
 {
     entryKey = Crypto::generateRandomKey(this->dbBasicData.EncryptionKeyLength / 8);
-    path = Crypto::encrypt(
-        SecureQByteArray(path + DB_SETTINGS_PADDING_SEPARATOR + Crypto::generateRandomBlob(min, max)),
-        entryKey,
-        this->dbBasicData.EncryptionAlgorithm
-    );
-    headerData = Crypto::encrypt(
-        SecureQByteArray(headerData + DB_SETTINGS_PADDING_SEPARATOR + Crypto::generateRandomBlob(min, max)),
-        entryKey,
-        this->dbBasicData.EncryptionAlgorithm
-    );
-    bodyData = Crypto::encrypt(
-        SecureQByteArray(bodyData + DB_SETTINGS_PADDING_SEPARATOR + Crypto::generateRandomBlob(min, max)),
-        entryKey,
-        this->dbBasicData.EncryptionAlgorithm
-    );
-    entryKey = Crypto::encrypt(entryKey, this->masterEncryptionKey, this->dbBasicData.EncryptionAlgorithm);
+    path = this->encryptBlob(path, entryKey, min, max);
+    headerData = this->encryptBlob(headerData, entryKey, min, max);
+    bodyData = this->encryptBlob(bodyData, entryKey, min, max);
+    entryKey = this->encryptBlob(entryKey, this->masterEncryptionKey, min, max);
 }
 
 SecureQByteArray DatabaseHandler::getDatabaseEntryBody(int entryId) const
@@ -467,13 +454,22 @@ SecureQByteArray DatabaseHandler::getDatabaseEntryBody(int entryId) const
             SecureQByteArray(reinterpret_cast<const char*>(sqlite3_column_blob(statement, 1)), sqlite3_column_bytes(statement, 1)),
             entryKey,
             this->dbBasicData.EncryptionAlgorithm
-        );
+        ).secureSplit(DB_SETTINGS_PADDING_SEPARATOR).at(0);
         return body;
     }
     catch (...) {
         sqlite3_finalize(statement);
         throw;
     }
+}
+
+SecureQByteArray DatabaseHandler::encryptBlob(const SecureQByteArray& payload, const SecureQByteArray& key, int paddingMin, int paddingMax) const
+{
+    return Crypto::encrypt(
+        ((paddingMin > 0 && paddingMax > 0) ? SecureQByteArray(payload + DB_SETTINGS_PADDING_SEPARATOR + Crypto::generateRandomBlob(paddingMin, paddingMax)) : payload),
+        key,
+        this->dbBasicData.EncryptionAlgorithm
+    );
 }
 
 QString DatabaseHandler::getCipherSetting(const QString& algorithm, size_t keyLength) const

@@ -35,6 +35,7 @@ public:
     ApiKeyEntry getApiKeyEntry(const DatabaseEntry& entry) const;
     SecureQByteArray getDatabaseSetting(const QString& settingName) const;
     void saveDatabaseSetting(const QString& settingName, const SecureQByteArray& value) const;
+    void saveEntryPaddingSetting(int min, int max) const;
 
 private:
     sqlite3* database = nullptr;
@@ -46,10 +47,10 @@ private:
     void createSettingsStructure();
     void createSecretsStructure();
     void fetchDatabaseBasicData();
-    void processSettingChange(const QString& setting, const SecureQByteArray& value) const;
     void getEntryValues(sqlite3_stmt* statement, SecureQByteArray& entryKey, SecureQByteArray& path, SecureQByteArray& headerData, SecureQByteArray& bodyData) const;
     void prepareEntryValues(int min, int max, SecureQByteArray& entryKey, SecureQByteArray& path, SecureQByteArray& headerData, SecureQByteArray& bodyData) const;
     SecureQByteArray getDatabaseEntryBody(int entryId) const;
+    SecureQByteArray encryptBlob(const SecureQByteArray& payload, const SecureQByteArray& key, int paddingMin = 0, int paddingMax = 0) const;
     QString getCipherSetting(const QString& algorithm, size_t keyLength = 0) const;
 };
 

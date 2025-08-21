@@ -192,13 +192,13 @@
               <set>Qt::AlignmentFlag::AlignCenter</set>
              </property>
              <property name="minimum">
-              <number>5</number>
-             </property>
-             <property name="maximum">
               <number>50</number>
              </property>
+             <property name="maximum">
+              <number>500</number>
+             </property>
              <property name="value">
-              <number>5</number>
+              <number>50</number>
              </property>
             </widget>
            </item>
@@ -216,13 +216,13 @@
               <set>Qt::AlignmentFlag::AlignCenter</set>
              </property>
              <property name="minimum">
-              <number>50</number>
-             </property>
-             <property name="maximum">
               <number>200</number>
              </property>
+             <property name="maximum">
+              <number>2000</number>
+             </property>
              <property name="value">
-              <number>50</number>
+              <number>200</number>
              </property>
             </widget>
            </item>

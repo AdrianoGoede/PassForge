@@ -31,6 +31,7 @@ SecureQByteArray Crypto::generateRandomKey(size_t keyLength)
 
 SecureQByteArray Crypto::generateRandomBlob(size_t minSize, size_t maxSize)
 {
+    if (minSize == 0 && maxSize == 0) return SecureQByteArray();
     const size_t range = (maxSize - minSize + 1);
     const size_t discard_limit = (SIZE_MAX / range * range);
     Botan::AutoSeeded_RNG rng;
@@ -38,6 +39,7 @@ SecureQByteArray Crypto::generateRandomBlob(size_t minSize, size_t maxSize)
     do {
         rng.randomize(reinterpret_cast<uint8_t*>(&blobSize), sizeof(blobSize));
     } while (blobSize >= discard_limit);
+    blobSize = (blobSize % range) + minSize;
     Botan::secure_vector<uint8_t> result = rng.random_vec(blobSize);
     return SecureQByteArray(reinterpret_cast<const char*>(result.data()), static_cast<int>(result.size()));
 }

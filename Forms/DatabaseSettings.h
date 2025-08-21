@@ -26,9 +26,7 @@ private:
     bool timeToBlockChanged = false;
     bool blockWhenMachineLockedChanged = false;
     bool blockWhenMinimizedChanged = false;
-    bool enableEntryPaddingChanged = false;
-    bool randomEntryPaddingMinChanged = false;
-    bool randomEntryPaddingMaxChanged = false;
+    bool randomEntryPaddingChanged = false;
 };
 
 #endif // DATABASESETTINGS_H
